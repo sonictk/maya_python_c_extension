@@ -37,6 +37,13 @@ if not defined DevEnvDir (
     )
 )
 
+if not defined DevEnvDir (
+    echo Unknown compiler version specifed!
+    goto error
+)
+
+echo Building in configuration: %BuildType% using MSVC %MSVCCompilerVersion%...
+
 :start_build
 
 REM    Make a build directory to store artifacts; remember, %~dp0 is just a special
