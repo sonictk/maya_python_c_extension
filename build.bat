@@ -70,7 +70,8 @@ set MayaIncludeDir=%MayaRootDir%\include
 
 set ProjectName=maya_python_c_ext
 
-set EntryPoint=%~dp0%ProjectName%_plugin_main.cpp
+set MayaPluginEntryPoint=%~dp0%ProjectName%_plugin_main.cpp
+set PythonModuleEntryPoint=%~dp0%ProjectName%_py_mod_main.cpp
 
 
 REM    We pipe errors to null, since we don't care if it fails
@@ -86,52 +87,85 @@ set CommonCompilerFlags=%CommonCompilerFlags% /I"%MayaRootDir%\include" /I "%May
 set CommonCompilerFlagsDebug=/Zi /Od %CommonCompilerFlags%
 set CommonCompilerFlagsRelease=/O2 %CommonCompilerFlags%
 
-set CompilerFlagsDebug=%CommonCompilerFlagsDebug% %EntryPoint%
-set CompilerFlagsRelease=%CommonCompilerFlagsRelease% %EntryPoint%
+set MayaPluginCompilerFlagsDebug=%CommonCompilerFlagsDebug% %MayaPluginEntryPoint%
+set MayaPluginCompilerFlagsRelease=%CommonCompilerFlagsRelease% %MayaPluginEntryPoint%
+
+set PythonModuleCompilerFlagsDebug=%CommonCompilerFlagsDebug% %PythonModuleEntryPoint%
+set PythonModuleCompilerFlagsRelease=%CommonCompilerFlagsRelease% %PythonModuleEntryPoint%
 
 
 REM    Setup all the linker flags
-set CommonLinkerFlags= /NOLOGO /INCREMENTAL:no /OPT:REF /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /MACHINE:X64  /machine:x64 /DLL
+set CommonLinkerFlags= /nologo /incremental:no /opt:ref /manifest /manifestuac:"level='asInvoker' uiAccess='false'" /manifest:embed /subsystem:console /tlbid:1 /dynamicbase /nxcompat /machine:x64  /machine:x64 /dll
 
 REM    Add all the Maya libraries to link against
-set CommonLinkerFlags=%CommonLinkerFlags% "%MayaRootDir%\lib\OpenMaya.lib" "%MayaRootDir%\lib\OpenMayaAnim.lib" "%MayaRootDir%\lib\OpenMayaFX.lib" "%MayaRootDir%\lib\OpenMayaRender.lib" "%MayaRootDir%\lib\OpenMayaUI.lib" "%MayaRootDir%\lib\Foundation.lib" "%MayaRootDir%\lib\clew.lib" "%MayaRootDir%\lib\OpenMaya.lib" "%MayaRootDir%\lib\Image.lib" "%MayaRootDir%\lib\Foundation.lib" "%MayaRootDir%\lib\IMFbase.lib" "%MayaRootDir%\lib\OpenMaya.lib" "%MayaRootDir%\lib\OpenMayaAnim.lib" "%MayaRootDir%\lib\OpenMayaFX.lib" "%MayaRootDir%\lib\OpenMayaRender.lib" "%MayaRootDir%\lib\OpenMayaUI.lib" "%MayaRootDir%\lib\clew.lib" "%MayaRootDir%\lib\Image.lib" "%MayaRootDir%\lib\IMFbase.lib" "%MayaRootDir%\lib\python27.lib"
+set CommonLinkerFlags=%CommonLinkerFlags% "%MayaRootDir%\lib\OpenMaya.lib" "%MayaRootDir%\lib\OpenMayaAnim.lib" "%MayaRootDir%\lib\OpenMayaFX.lib" "%MayaRootDir%\lib\OpenMayaRender.lib" "%MayaRootDir%\lib\OpenMayaUI.lib" "%MayaRootDir%\lib\Foundation.lib" "%MayaRootDir%\lib\IMFbase.lib" "%MayaRootDir%\lib\clew.lib" "%MayaRootDir%\lib\Image.lib"  "%MayaRootDir%\lib\python27.lib"
 
 REM    Now add the OS libraries to link against
-set CommonLinkerFlags=%CommonLinkerFlags% Shlwapi.lib kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib
+set CommonLinkerFlags=%CommonLinkerFlags% Shlwapi.lib Kernel32.lib user32.lib gdi32.lib winspool.lib Shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib
 
-set CommonLinkerFlagsDebug=%CommonLinkerFlags% /DEBUG
+set CommonLinkerFlagsDebug=%CommonLinkerFlags% /Debug
 set CommonLinkerFlagsRelease=%CommonLinkerFlags%
 
-set MayaPluginLinkerFlagsCommon=/export:initializePlugin /export:uninitializePlugin
+set CommonLinkerFlags=/pdb:"%BuildDir%\%ProjectName%.pdb" /implib:"%BuildDir%\%ProjectName%.lib" "%BuildDir%\%ProjectName%.obj"
 
-set CommonLinkerFlags=/PDB:"%BuildDir%\%ProjectName%.pdb" /IMPLIB:"%BuildDir%\%ProjectName%.lib" "%BuildDir%\%ProjectName%.obj" /OUT:"%BuildDir%\%ProjectName%.mll"
+set MayaPluginExtension=mll
+set PythonModuleExtension=pyd
 
-set LinkerFlagsRelease=%CommonLinkerFlagsRelease% %CommonLinkerFlags%
-set LinkerFlagsDebug=%CommonLinkerFlagsDebug% %CommonLinkerFlags%
+set MayaPluginLinkerFlagsCommon=/export:initializePlugin /export:uninitializePlugin /out:"%BuildDir%\%ProjectName%.%MayaPluginExtension%"
+set PythonModuleLinkerFlagsCommon=/export:initmaya_python_c_ext /out:"%BuildDir%\%ProjectName%.%PythonModuleExtension%"
+
+
+set MayaPluginLinkerFlagsRelease=%CommonLinkerFlagsRelease% %CommonLinkerFlags% %MayaPluginLinkerFlagsCommon%
+set MayaPluginLinkerFlagsDebug=%CommonLinkerFlagsDebug% %CommonLinkerFlags% %MayaPluginLinkerFlagsCommon%
+
+set PythonModuleLinkerFlagsRelease=%CommonLinkerFlagsRelease% %CommonLinkerFlags% %PythonModuleLinkerFlagsCommon%
+set PythonModuleLinkerFlagsDebug=%CommonLinkerFlagsDebug% %CommonLinkerFlags% %PythonModuleLinkerFlagsCommon%
 
 
 if "%BuildType%"=="debug" (
     echo Building in debug mode...
-    set CompilerFlags=%CompilerFlagsDebug%
-    set LinkerFlags=%LinkerFlagsDebug%
+
+    set MayaPluginCompilerFlags=%MayaPluginCompilerFlagsDebug%
+    set MayaPluginLinkerFlags=%MayaPluginLinkerFlagsDebug%
+
+    set PythonModuleCompilerFlags=%PythonModuleCompilerFlagsDebug%
+    set PythonModuleLinkerFlags=%PythonModuleLinkerFlagsDebug%
 
 ) else (
     echo Building in release mode...
-    set CompilerFlags=%CompilerFlagsRelease%
-    set LinkerFlags=%LinkerFlagsRelease%
+
+    set MayaPluginCompilerFlags=%MayaPluginCompilerFlagsRelease%
+    set MayaPluginLinkerFlags=%MayaPluginLinkerFlagsRelease%
+
+    set PythonModuleCompilerFlags=%PythonModuleCompilerFlagsRelease%
+    set PythonModuleLinkerFlags=%PythonModuleLinkerFlagsRelease%
 )
 
+REM Now build the standalone Python module first
+echo Compiling Python module (command follows)...
+echo cl %PythonModuleCompilerFlags%
+cl %PythonModuleCompilerFlags%
+if %errorlevel% neq 0 goto error
 
-echo Compiling (command follows)...
-echo cl %CompilerFlags%
-cl %CompilerFlags%
+
+:link
+echo Linking Python module (command follows)...
+echo link %PythonModuleLinkerFlags%
+link %PythonModuleLinkerFlags%
+if %errorlevel% neq 0 goto error
+
+
+REM Now build the Maya plugin
+echo Compiling Maya plugin (command follows)...
+echo cl %MayaPluginCompilerFlags%
+cl %MayaPluginCompilerFlags%
 if %errorlevel% neq 0 goto error
 
 
 :link
 echo Linking (command follows)...
-echo link %LinkerFlags%
-link %LinkerFlags%
+echo link %MayaPluginLinkerFlags%
+link %MayaPluginLinkerFlags%
 if %errorlevel% neq 0 goto error
 if %errorlevel% == 0 goto success
 
