@@ -20,7 +20,7 @@ MStatus initializePlugin(MObject obj)
 		// crashing Maya.
 		PyGILState_STATE pyGILState = PyGILState_Ensure();
 
-		PyObject *module = Py_InitModule3("initmaya_python_c_ext",
+		PyObject *module = Py_InitModule3("maya_python_c_ext",
 										  mayaPythonCExtMethods,
 										  MAYA_PYTHON_C_EXT_DOCSTRING);
 

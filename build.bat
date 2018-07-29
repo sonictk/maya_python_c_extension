@@ -102,10 +102,10 @@ set PythonModuleCompilerFlagsRelease=%CommonCompilerFlagsRelease% %PythonModuleE
 
 
 REM    Setup all the linker flags
-set CommonLinkerFlags= /nologo /incremental:no /opt:ref /manifest /manifestuac:"level='asInvoker' uiAccess='false'" /manifest:embed /subsystem:console /tlbid:1 /dynamicbase /nxcompat /machine:x64  /machine:x64 /dll
+set CommonLinkerFlags=/nologo /incremental:no /opt:ref /manifestuac:"level='asInvoker' uiAccess='false'" /manifest:embed /subsystem:console /tlbid:1 /dynamicbase /nxcompat /machine:x64 /dll
 
 REM    Add all the Maya libraries to link against
-set CommonLinkerFlags=%CommonLinkerFlags% "%MayaRootDir%\lib\OpenMaya.lib" "%MayaRootDir%\lib\OpenMayaAnim.lib" "%MayaRootDir%\lib\OpenMayaFX.lib" "%MayaRootDir%\lib\OpenMayaRender.lib" "%MayaRootDir%\lib\OpenMayaUI.lib" "%MayaRootDir%\lib\Foundation.lib" "%MayaRootDir%\lib\IMFbase.lib" "%MayaRootDir%\lib\clew.lib" "%MayaRootDir%\lib\Image.lib"  "%MayaRootDir%\lib\python27.lib"
+set CommonLinkerFlags=%CommonLinkerFlags% "%MayaRootDir%\lib\OpenMaya.lib" "%MayaRootDir%\lib\OpenMayaAnim.lib" "%MayaRootDir%\lib\OpenMayaFX.lib" "%MayaRootDir%\lib\OpenMayaRender.lib" "%MayaRootDir%\lib\OpenMayaUI.lib" "%MayaRootDir%\lib\Foundation.lib" "%MayaRootDir%\lib\IMFbase.lib" "%MayaRootDir%\lib\clew.lib" "%MayaRootDir%\lib\Image.lib" "%MayaRootDir%\lib\python27.lib"
 
 REM    Now add the OS libraries to link against
 set CommonLinkerFlags=%CommonLinkerFlags% /defaultlib:Shlwapi.lib /defaultlib:Kernel32.lib /defaultlib:user32.lib /defaultlib:gdi32.lib /defaultlib:winspool.lib /defaultlib:Shell32.lib /defaultlib:ole32.lib /defaultlib:oleaut32.lib /defaultlib:uuid.lib /defaultlib:comdlg32.lib /defaultlib:advapi32.lib
