@@ -1,4 +1,4 @@
-#include "maya_python_c_ext_py_mod_main.h"
+#include "maya_python_c_ext_plugin_main.h"
 
 
 // NOTE: (sonictk) Disable name mangling for Python distutils since it really

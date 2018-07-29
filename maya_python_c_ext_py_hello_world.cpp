@@ -12,10 +12,14 @@ static PyObject *pyHelloWorldMaya(PyObject *self, PyObject *args)
 		return NULL;
 	}
 
+	PyGILState_STATE pyGILState = PyGILState_Ensure();
+
 	helloWorldMaya();
 	MGlobal::displayInfo(inputString);
 
 	PyObject *result = Py_BuildValue("hello world");
+
+	PyGILState_Release(pyGILState);
 
 	return result;
 }
