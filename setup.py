@@ -32,11 +32,11 @@ mayaPythonCExtModule = Extension("maya_python_c_ext",
                                      "python27"
                                  ],
                                  library_dirs=[mayaLibraryDirectory],
-                                 sources=["maya_python_c_ext_plugin_main.cpp"],
+                                 sources=["maya_python_c_ext_py_mod_main.cpp"],
                                  extra_compile_args=['/EHsc'])
 
 setup(name="maya_python_c_ext",
       version="1.0.0",
       description="Maya Python C Extension - the traditional Python version",
       author="Siew Yi Liang",
-      ext_modules = [mayaPythonCExtModule])
+      ext_modules=[mayaPythonCExtModule])

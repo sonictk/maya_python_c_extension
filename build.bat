@@ -3,7 +3,7 @@ REM    This is the Windows build script for the Maya example Python C extension.
 REM    usage: build.bat [debug|release] [2012|2015|2017]
 REM    e.g. ``build.bat release 2012`` will build in release mode using MSVC 2012 (Maya 2016 release).
 REM         ``build.bat debug 2017`` will build in debug mode using MSVC 2017.
-REM    If no arguments are specified, will default to building in release mode with MSVC 2015. (Maya 2018 release).
+REM    If no arguments are specified, will default to building in release mode with vcpython27. (Maya 2018 release).
 
 echo Build script started executing at %time% ...
 
