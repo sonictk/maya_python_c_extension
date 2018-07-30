@@ -4,6 +4,9 @@
 #include <python2.7/Python.h>
 
 
+static const char HELLO_WORLD_MAYA_DOCSTRING[] = "Says hello world!";
+
+
 static PyObject *pyHelloWorldMaya(PyObject *self, PyObject *args);
 
 

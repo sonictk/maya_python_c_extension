@@ -17,7 +17,7 @@ static PyObject *pyHelloWorldMaya(PyObject *self, PyObject *args)
 	helloWorldMaya();
 	MGlobal::displayInfo(inputString);
 
-	PyObject *result = Py_BuildValue("hello world");
+	PyObject *result = Py_BuildValue("s", inputString);
 
 	PyGILState_Release(pyGILState);
 
