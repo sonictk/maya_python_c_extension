@@ -74,6 +74,7 @@ pushd %BuildDir%
 REM    Set up globals
 set MayaRootDir=C:\Program Files\Autodesk\Maya2018
 set MayaIncludeDir=%MayaRootDir%\include
+set MayaLibraryDir=%MayaRootDir%\lib
 
 set ProjectName=maya_python_c_ext
 
@@ -105,7 +106,7 @@ REM    Setup all the linker flags
 set CommonLinkerFlags=/nologo /incremental:no /manifestuac:"level='asInvoker' uiAccess='false'" /manifest:embed /subsystem:console /tlbid:1 /dynamicbase /nxcompat /machine:x64 /dll
 
 REM    Add all the Maya libraries to link against
-set CommonLinkerFlags=%CommonLinkerFlags% "%MayaRootDir%\lib\OpenMaya.lib" "%MayaRootDir%\lib\OpenMayaAnim.lib" "%MayaRootDir%\lib\OpenMayaFX.lib" "%MayaRootDir%\lib\OpenMayaRender.lib" "%MayaRootDir%\lib\OpenMayaUI.lib" "%MayaRootDir%\lib\Foundation.lib" "%MayaRootDir%\lib\IMFbase.lib" "%MayaRootDir%\lib\clew.lib" "%MayaRootDir%\lib\Image.lib" "%MayaRootDir%\lib\python27.lib"
+set CommonLinkerFlags=%CommonLinkerFlags% "%MayaLibraryDir%\OpenMaya.lib" "%MayaLibraryDir%\OpenMayaAnim.lib" "%MayaLibraryDir%\OpenMayaFX.lib" "%MayaLibraryDir%\OpenMayaRender.lib" "%MayaLibraryDir%\OpenMayaUI.lib" "%MayaLibraryDir%\Foundation.lib" "%MayaLibraryDir%\IMFbase.lib" "%MayaLibraryDir%\clew.lib" "%MayaLibraryDir%\Image.lib" "%MayaLibraryDir%\python27.lib"
 
 REM    Now add the OS libraries to link against
 set CommonLinkerFlags=%CommonLinkerFlags% /defaultlib:Shlwapi.lib /defaultlib:Kernel32.lib /defaultlib:user32.lib /defaultlib:gdi32.lib /defaultlib:winspool.lib /defaultlib:Shell32.lib /defaultlib:ole32.lib /defaultlib:oleaut32.lib /defaultlib:uuid.lib /defaultlib:comdlg32.lib /defaultlib:advapi32.lib
