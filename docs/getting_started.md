@@ -77,9 +77,9 @@ to. Let's start with the timeless ``hello world``.
 
 void helloWorldMaya()
 {
-	MGlobal::displayInfo("Hello world from the Maya Python C extension!");
+    MGlobal::displayInfo("Hello world from the Maya Python C extension!");
 
-	return;
+    return;
 }
 ```
 
@@ -104,20 +104,20 @@ static PyObject *pyHelloWorldMaya(PyObject *self, PyObject *args);
 
 static PyObject *pyHelloWorldMaya(PyObject *self, PyObject *args)
 {
-	const char *inputString;
-	if (!PyArg_ParseTuple(args, "s", &inputString)) {
-		return NULL;
-	}
+    const char *inputString;
+    if (!PyArg_ParseTuple(args, "s", &inputString)) {
+        return NULL;
+    }
 
-	PyGILState_STATE pyGILState = PyGILState_Ensure();
+    PyGILState_STATE pyGILState = PyGILState_Ensure();
 
-	helloWorldMaya();
+    helloWorldMaya();
 
-	PyObject *result = Py_BuildValue("s", inputString);
+    PyObject *result = Py_BuildValue("s", inputString);
 
-	PyGILState_Release(pyGILState);
+    PyGILState_Release(pyGILState);
 
-	return result;
+    return result;
 }
 ```
 
@@ -179,20 +179,21 @@ So what's the rest of the code doing, then?
 ```
 static PyObject *pyHelloWorldMaya(PyObject *self, PyObject *args)
 {
-	const char *inputString;
-	if (!PyArg_ParseTuple(args, "s", &inputString)) {
-		return NULL;
-	}
+    const char *inputString;
+    if (!PyArg_ParseTuple(args, "s", &inputString)) {
+        return NULL;
+    }
 
-	PyGILState_STATE pyGILState = PyGILState_Ensure();
+    PyGILState_STATE pyGILState = PyGILState_Ensure();
 
-	helloWorldMaya();
+    helloWorldMaya();
+    MGlobal::displayInfo(inputString);
 
-	PyObject *result = Py_BuildValue("s", inputString);
+    PyObject *result = Py_BuildValue("s", inputString);
 
-	PyGILState_Release(pyGILState);
+    PyGILState_Release(pyGILState);
 
-	return result;
+    return result;
 }
 ```
 
@@ -218,11 +219,15 @@ YOUR OWN PYTHON C EXTENSION" tutorials, and that's because it's Maya-specific.
 
 ### The Global Interpreter Lock (GIL) ###
 
-This is a topic that comes up a lot, even for experienced TDs/programmers at
-work, so I thought I'd take my stab at explaining what is really at its core a
-fairly fundamental concept, if a bit complex.
+This is a topic that comes up a lot, even for experienced TDs/programmers, so I
+thought I'd take my stab at explaining what is really at its core a fairly
+fundamental concept, if a bit complex.
 
-**The Global Interpreter Lock in Python is a mutex**. That's it.
+The way I like to think about the GIL in Python is the following statement:
+
+> The Global Interpreter Lock in Python is a mutex.
+
+That's it.
 
 !!! tip "Mutex?"
     Ok, so for those of us who aren't familiar with what a mutex is, it's short for
@@ -257,6 +262,21 @@ C extension you probably wouldn't care about this, or would use
 lock. Thus, we see these two calls surrounding the beginning and end of the
 relevant critical section that calls Python code.
 
+
 ### Returning ``PyObject`` values ###
 
-### Writing the build script ###
+We see that the next unfamiliar statement is the line:
+
+```
+    PyObject *result = Py_BuildValue("s", inputString);
+```
+
+It's fairly straightfoward; this just uses the same format specifiers that
+``PyArg_ParseTuple`` did to build a ``PyObject`` from the given C type. In this
+case, we're building a Python string from our C string and returning that. Keep
+in mind that unlike in Python, we can only return one value from C functions, so
+keeping the exact same connotations that you may have in your Python API might
+be difficult if you don't follow this convention.
+
+So, not that complicated, right? We'll begin writing the entry point in the next
+chapter, and then try to get a working ``.pyd`` file compiled right after.
