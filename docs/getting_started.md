@@ -1,418 +1,262 @@
 # Getting started #
 
-## What are we even doing? ##
+Now that we understand the goals of the project, let's dive a little bit into
+the theory surrounding how a Python C extension works before writing any
+boilerplate. It'll help serve as a basis for guiding what we need to do first.
 
-Here's [what's going down](https://www.youtube.com/watch?v=rFz59Jmgewk). The
-normal approach for how a custom node in Maya would work would be something like
-the following (connections that are called once are dashed, and connections that
-are called all the time are solid):
+## What is a Python C Extension anyway? ##
 
-{% dot high_level_overview.svg
+If you have some competence with Python, you'll probably have noticed by now
+that sometimes, certain Python modules aren't loaded in the traditional sense of
+having a ``.py``file along with a ``__init__.py`` file as well; there's usually
+a single ``.pyd`` instead. If you've seen
+my
+[previous tutorial](https://sonictk.github.io/maya_hot_reload_example_public/getting_started/#understanding-how-libraries-work),
+know this: a ``.pyd`` file is essentially a DLL. It's the _exact same
+format_. However, just like a Maya plugin (``.mll`` on Windows) shares the exact
+same format as a DLL does, a ``.pyd`` file follows specific conventions so that
+the Python interpreter knows how to load it:
 
-digraph overview {
-    graph[fontname="Arial", fontsize=14, nodesep=1, rankdir=LR];
-    node[fontname="Arial", fontsize=14, shape=box];
-    edge[fontname="Arial", fontsize=10];
+* The entry point for module named ``foo_bar.pyd`` will be automatically determined
+  to be ``initfoo_bar``. This is the convention that the Python interpreter uses
+  to search for a symbol so that it can dynamically load the library at run-time
+  when the statement ``import foo_bar`` is parsed in the interpreter. We'll talk
+  about this more when we implement our own entry point in a bit.
 
-    Maya[label="Maya"];
+* As mentioned above, the ``.pyd`` file does not need to be linked with the main
+  program executable (or Maya plugin, in this case), since the Python
+  interpreter will be loading it dynamically at run-time.
 
-    host[shape=none,
-         label=<
-            <table border="0" cellspacing="0">
-                <tr><td border="1" bgcolor="limegreen"><b>Plugin DLL/SO</b></td></tr>
-                <tr><td port="ip" border="1"><font point-size="10.0" face="Courier">initializePlugin()</font></td></tr>
-                <tr><td port="up" border="1"><font point-size="10.0" face="Courier">uninitializePlugin()</font></td></tr>
-                <tr><td port="d" border="1"><font point-size="10.0" face="Courier">deform()</font></td></tr>
-                <tr><td port="o" border="1"><font point-size="10.0" face="Courier">...</font></td></tr>
-            </table>
-        >
-    ];
-
-    host:ip -> Maya[label="Called when plugin is loaded", style=dashed];
-    host:up -> Maya[label="Called when plugin is unloaded", style=dashed];
-    host:d -> Maya[label="Called when node is dirtied"];
-}
-
-%}
-
-It's pretty straightforward; the plugin **Dynamic-link library (Windows/OSX) or
-Shared Object (Linux)** contains all the initialization/uninitialization/deformation
-logic/whatever necessary for the plugin to function; Maya just loads the entire binary,
-calls the functions as needed whenever it determines it should, and that's the
-end of the story.
-
-What we're going to be doing instead is something like the following:
-
-{% dot high_level_overview_1.svg
-
-digraph overview {
-    graph[fontname="Arial", fontsize=14, nodesep=1, rankdir=LR, size=9];
-    node[fontname="Arial", fontsize=14, shape=box];
-    edge[fontname="Arial", fontsize=10];
-
-    Maya[label="Maya"];
-
-    host[shape=none,
-         label=<
-            <table border="0" cellspacing="0">
-                <tr><td border="1" bgcolor="limegreen"><b>Host Plugin</b></td></tr>
-                <tr><td port="ip" border="1"><font point-size="10.0" face="Courier">initializePlugin()</font></td></tr>
-                <tr><td port="up" border="1"><font point-size="10.0" face="Courier">uninitializePlugin()</font></td></tr>
-                <tr><td port="d" border="1"><font point-size="10.0" face="Courier">deform()</font></td></tr>
-            </table>
-        >
-    ];
-
-    client[shape=none,
-         label=<
-            <table border="0" cellspacing="0">
-                <tr><td border="1" bgcolor="yellow"><b>Client Plugin</b></td></tr>
-                <tr><td port="l" border="1"><font point-size="10.0" face="Courier">logic()</font></td></tr>
-                <tr><td port="o" border="1"><font point-size="10.0" face="Courier">...</font></td></tr>
-            </table>
-        >
-    ];
-
-    host:ip -> Maya[label="Called on load", style=dashed];
-    host:up -> Maya[label="Called on unload", style=dashed];
-    host:d -> Maya[label="Called when dirtied"];
-
-    client:l -> host:d[label="Check last modified timestamp"];
-}
-
-%}
-
-!!! note
-    If the above didn't make any sense, please take a moment to review
-    the
-    [Autodesk documentation](http://help.autodesk.com/view/MAYAUL/2017/ENU/?guid=__files_Command_plugins_initializePlugin_htm)
-    regarding how Maya plugins and their entry points work.
-
-In this scenario, the ``logic()`` function will now contain all the **business
-logic** necessary for the ``deform()`` function to work; the ``deform()``
-function itself will become pretty much nothing but a wrapper around Maya's
-machinery. (For simplicity's sake, I will not be discussing taking the
-``deform()`` function out of the host plugin as well in this tutorial, though it
-is certainly possible, and I encourage you to try!)
-
-OK, so far it's just a level of abstraction that we've introduced here. What
-happens when we re-compile the client plugin?
-
-{% dot high_level_overview_2.svg
-
-digraph overview {
-    graph[fontname="Arial", fontsize=14, nodesep=1, rankdir=LR, size=9];
-    node[fontname="Arial", fontsize=14, shape=box];
-    edge[fontname="Arial", fontsize=10];
-
-    Maya[label="Maya"];
-
-    host[shape=none,
-         label=<
-            <table border="0" cellspacing="0">
-                <tr><td border="1" bgcolor="limegreen"><b>Host Plugin</b></td></tr>
-                <tr><td port="ip" border="1"><font point-size="10.0" face="Courier">initializePlugin()</font></td></tr>
-                <tr><td port="up" border="1"><font point-size="10.0" face="Courier">uninitializePlugin()</font></td></tr>
-                <tr><td port="d" border="1"><font point-size="10.0" face="Courier">deform()</font></td></tr>
-            </table>
-        >
-    ];
-
-    clientOld[shape=none,
-         label=<
-            <table border="0" cellspacing="0">
-                <tr><td border="1" bgcolor="grey"><b>Client Plugin (Old)</b></td></tr>
-                <tr><td port="l" border="1"><font point-size="10.0" face="Courier">logic()</font></td></tr>
-                <tr><td port="o" border="1"><font point-size="10.0" face="Courier">...</font></td></tr>
-            </table>
-        >
-    ];
-
-    clientNew[shape=none,
-         label=<
-            <table border="0" cellspacing="0">
-                <tr><td border="1" bgcolor="yellow"><b>Client Plugin (New)</b></td></tr>
-                <tr><td port="l" border="1"><font point-size="10.0" face="Courier">logic()</font></td></tr>
-                <tr><td port="o" border="1"><font point-size="10.0" face="Courier">...</font></td></tr>
-            </table>
-        >
-    ];
-
-    host:ip -> Maya[label="Called on load", style=dashed];
-    host:up -> Maya[label="Called on unload", style=dashed];
-    host:d -> Maya[label="Called when dirtied"];
-
-    host:d -> clientOld:l[label="1 .Unloads library", color=red, style=dashed, fontcolor=red];
-    clientNew -> host:d[label="2. Loads library with newer modified
-    timestamp", style=dashed];
-    clientOld:l -> clientNew:l[label="3. Pointer re-directed to new address", style=dashed];
-}
-
-%}
-
-This might seem a little confusing, so let's go through step-by-step:
-
-* In the ``deform()`` function, we're checking the current modification
-  timestamp of the **client plugin**. If we detect that the current file's
-  timestamp is newer than the current one we have loaded in memory, we **unload
-  the old one** and **load the new one into memory** instead.
-* We then **fix up the function pointer** to the old ``logic()`` method to
-  point to the address of the new ``logic()`` function in memory. If this
-  doesn't make sense, I'll go over it in a bit. Basically, think of it as us
-  telling the host plugin that the old ``logic()`` function is no longer valid
-  and that it should be looking at our new one instead that we just modified.
-
-!!! note "Function Pointers: the short version"
-    If you're new to C/C++, you might not be familiar with what they are.
-    **Function pointers** are basically, as the name implies, *pointers to
-    functions*; they point to addresses of where the start of function calls
-    live in memory. They allow us to basically re-direct our code to call newer
-    versions of functions that we create on-the-fly as required.
-
-    I recommend [getting familar with them](http://www.geeksforgeeks.org/function-pointer-in-c/)
-    before continuing with this tutorial, as the concept is integral to this entire
-    workflow.
-
-
-## Understanding how libraries work ##
-
-Before we continue any further, let's take a moment to recap on how libraries
-work in operating systems, especially since there are some important differences
-between how Windows/Linux/OSX handles them.
-
-!!! warning
-    I am not an expert on how these things work by any stretch of the
-    imagination, and I highly encourage you
-    to
-    [read up on the subject](https://en.wikipedia.org/wiki/Dynamic-link_library)
-    on your own as well to get a better understanding of the machinery
-    involved. I will only cover what I think is important in understanding what
-    we'll be attempting to accomplish within the scope of this project.
-
-### Understanding the executable ###
-
-You know what an executable is; it's the thing you basically double-click on in
-your file explorer to run a program. When you do that, the OS basically does
-something similar to the following (this is a grossly over-simplified
-explanation of what is actually happening, but we'll gloss over that for now):
-
-{% dot exe_overview.svg
-
-digraph overview {
-    graph[fontname="Arial", fontsize=14, nodesep=1, size=9, rankdir=LR];
-    node[fontname="Arial", fontsize=14, shape=box];
-    edge[fontname="Arial", fontsize=10];
-
-    exe[shape=none,
-         label=<
-            <table border="0" cellspacing="0">
-                <tr><td border="1" bgcolor="limegreen"><b>.exe file (PE format)</b></td></tr>
-                <tr><td port="h" border="1"><font point-size="10.0">header</font></td></tr>
-                <tr><td port="i" border="1"><font point-size="10.0">intel code</font></td></tr>
-                <tr><td port="f" border="1"><font point-size="10.0">fixup table</font></td></tr>
-            </table>
-        >
-    ];
-
-    memory[shape=none,
-         label=<
-            <table border="0" cellspacing="0">
-                <tr><td border="1" bgcolor="yellow"><b>Memory (RAM)</b></td></tr>
-                <tr><td port="i" border="1"><font point-size="10.0">intel code</font></td></tr>
-                <tr><td port="f" border="1"><font point-size="10.0">function calls</font></td></tr>
-            </table>
-        >
-    ];
-
-    windowsCode[label="Windows code" color="blue"];
-
-    linker[label="Dynamic linker"];
-
-    execution[label="Code runs"];
-
-    exe:f -> linker[color="green"];
-    linker -> memory:f[color="green", label="patches over"];
-    exe:i -> linker -> memory:i[color="red"];
-    windowsCode -> linker[label="e.g. WinMain()", color="green"];
-
-    memory:i -> execution;
-}
-
-%}
-
-The file format on Windows for such file is known as
-the [Portable Executable](https://en.wikipedia.org/wiki/Portable_Executable)
-format, which is basically a standard layout for how a binary file should look
-like so that the OS (in this case, Windows) knows how to look inside it and find
-the stuff it needs.
+* You cannot rely on the standard method of declaring exports from a DLL, either
+  through symbol visiblity or specifying external linkage (i.e. ``extern
+  "C"``). Python-specific exports must be declared through the use of special
+  functions, ``Py_InitModule`` and its variants. Again, we'll be talking about
+  this in a bit.
 
 !!! tip "Crossing the platforms"
-    On Linux/OSX, the file format used is known as the [Executable and Linkable
-    Format (ELF)](https://en.wikipedia.org/wiki/Executable_and_Linkable_Format).
-    While not precisely the same as the Windows PE format, for our purposes, we
-    can assume that they function in a similar manner.
+    On Linux, ``.pyd`` files will instead be ``.so`` files, and (I believe, but
+    I can't be bothered to boot up my Macbook to check) on OSX, this will be
+    ``.dylib`` files.
 
-Your ``.exe`` file that you compile contains various **memory segments**. There
-is the **data section**, the **code section**, **stack** and the **fixup table**
-(also known as the **import address table**). In it, there are assembly
-instructions that make up the function calls that you've created in your source
-code. These assembly instructions were generated when you compiled your source
-code by whichever compiler you chose to use.
+The main takeaway here is that _python modules are nothing special._ They're
+just libraries, loaded at run-time dynamically, that follow specific conventions
+that the Python interpreter relies on to be able to function the way it does.
 
-When you click on that ``.exe`` file, Windows creates a new process for
-you and maps the executable into that process' memory. Permissions are set for
-various sections of the data read in (i.e. the **code section** is set to executable,
-the **data** section is read/write, and the **stack/constants** are
-read-only). It then looks at the **fixup table** that you have in your
-executable to see where your Windows/CRT function calls should be *patched over*
-in memory to point to the actual address of Windows functions (i.e. **not**
-inside your executable!) So things like ``strlen()``, ``WinMain()`` and even
-things like ``malloc()`` all get executed this way.
+Ok, so we know that a ``.pyd`` is essentially just a DLL. Cool. So how does the
+Python interpreter know where to look for our module when we type ``import foo_bar``?
 
-### Understanding the library ###
+## Loading a Python module ##
 
-OK, whatever. So what has this got to do with libraries?
+!!! tip "Fast-forward"
+    If you're already innately familiar with how Python searches for modules,
+    you can go ahead and skip to the next section. If not, I suggest you read
+    this part before continuing.
 
-First of all, let's get one thing straight: **a library is, for all intents and
-purposes, exactly the same thing as an executable**. The major difference is
-that the library is not directly executable (as the name implies), and a library
-(usually) doesn't need to define an entry point. Libraries basically contain the
-same things that an executable does; in fact, on Windows, the **Dynamic Link
-Library (DLL)** format (which is known as a *shared library* format) uses the
-exact same PE format that an ``.exe`` file does. The same is true for Linux as well,
-where **Shared Object (SO)** and executables on Linux both share the ELF format.
+The search path for all modules globally available to Python happens in a couple
+of areas; one of those is on the path specified by the environment variable
+``PYTHONPATH``. If ``foo_bar.pyd`` is available on that path, typing ``import
+foo_bar`` will cause the Python interpreter to attempt to load that ``.pyd``
+file, inspect it for a suitable entry point and initialize it if found. Once it
+does so, you'll be able to access the functions previously defined in its
+_function table_.
 
-One other difference is that typically, on Windows, a shared library *exports*
-specific symbols for usage outside of itself through something called an
-[export table](https://docs.microsoft.com/en-us/cpp/build/exporting-from-a-dll).
-This exports table is what allows other executables like ``Maya.exe`` to be able
-to access the functions such as ``initializePlugin`` and ``uninitalizePlugin``
-in your ``.mll`` files (If you recall, you have to externalize these functions when
-compiling your Maya plug-in as well!).
+Bear in mind; if you have another conventional ``foo_bar.py``module also
+available on the ``PYTHONPATH``, ahead of the ``.pyd`` version, that module will
+be used instead of the compiled version! It is therefore important to manage the
+paths on your ``PYTHONPATH``, along with the namespaces of your modules.
 
-!!! tip "Crossing the platforms"
-    On Linux/OSX, **all symbols in a ``.so`` file are available to an
-    interrogating process (i.e. Maya) by default**. This means that we are able
-    to lookup such symbols without the need for an export table unless we strip
-    out the symbols manually; we'll talk about this later on during
-    implementation of our compilation scripts.
 
-    On this point, it's important to note that if it wasn't apparent,
-    the ``.mll`` and ``.dll`` extensions are essentially the same; Maya just
-    wants a ``.mll`` extension for convention's sake; the file formats are
-    identical for both. On Linux, you should be aware that the convention for
-    both a Maya plug-in extension and a normal shared library is ``.so``.
+## "Hello, Maya" ##
 
-There are different types of libraries used for different purposes: **static**
-libraries, which are libraries used during *linking* and actually combined into
-the final executable, and **dynamic** libraries, which are libraries that, as
-the name implies, *dynamically loaded* either at **load-time** or **run-time**
-rather than actually being combined into the main executable file.
+Before we write bindings to anything, we need _something_ to actually bind
+to. Let's start with the timeless ``hello world``.
 
-We'll be focusing on dynamic link libraries in this tutorial, since they give us the
-properties we'll need for code hotloading. If you'd like to learn more about the
-differences between the two and what they're each used for, I recommend [reading
-up](http://www.yolinux.com/TUTORIALS/LibraryArchives-StaticAndDynamic.html) on
-the [subject](https://msdn.microsoft.com/en-us/library/windows/desktop/ms681938(v=vs.85).aspx).
+```
+#include <maya/MGlobal.h>
 
-In addition to dynamic linking, there are two ways to perform this as well, known as
-[load-time](https://msdn.microsoft.com/en-us/library/windows/desktop/ms684184(v=vs.85).aspx)
-dynamic linking, and
-[run-time](https://msdn.microsoft.com/en-us/library/windows/desktop/ms685090%28v=vs.85%29.aspx?f=255&MSPPError=-2147217396)
-dynamic linking. For our purposes, we will be using **run-time** dynamic
-linking, which basically means that we will manage loading the DLL ourselves at
-*run-time*, reading that DLL's available symbols, and mapping **function pointers**
-to point to those symbols.
 
-## How it all comes together ##
+void helloWorldMaya()
+{
+	MGlobal::displayInfo("Hello world from the Maya Python C extension!");
 
-So when all is said and done, here's what things look like when we introduce a
-DLL to the mix:
-
-{% dot altogether_now.svg
-
-digraph overview {
-    graph[fontname="Arial", fontsize=14];
-    node[fontname="Arial", fontsize=14, shape=box];
-    edge[fontname="Arial", fontsize=10];
-
-    exe[shape=none,
-         label=<
-            <table border="0" cellspacing="0">
-                <tr><td border="1" bgcolor="limegreen"><b>Maya.exe file (PE format)</b></td></tr>
-                <tr><td port="h" border="1"><font point-size="10.0">header</font></td></tr>
-                <tr><td port="i" border="1"><font point-size="10.0">intel code</font></td></tr>
-                <tr><td port="f" border="1"><font point-size="10.0">fixup table</font></td></tr>
-            </table>
-        >
-    ];
-
-    dll[shape=none,
-         label=<
-            <table border="0" cellspacing="0">
-                <tr><td border="1" bgcolor="limegreen"><b>.DLL file (PE format)</b></td></tr>
-                <tr><td port="h" border="1"><font point-size="10.0">header</font></td></tr>
-                <tr><td port="i" border="1"><font point-size="10.0">intel code</font></td></tr>
-                <tr><td port="f" border="1"><font point-size="10.0">fixup table</font></td></tr>
-                <tr><td port="et" border="1" bgcolor="lightblue"><font point-size="10.0">exports table</font></td></tr>
-            </table>
-        >
-    ];
-
-    memory[shape=none,
-         label=<
-            <table border="0" cellspacing="0">
-                <tr><td border="1" bgcolor="yellow"><b>Memory (RAM)</b></td></tr>
-                <tr><td port="i" border="1"><font point-size="10.0">intel code</font></td></tr>
-                <tr><td port="f" border="1"><font point-size="10.0">function calls</font></td></tr>
-            </table>
-        >
-    ];
-
-    windowsCode[label="Windows code" color="blue"];
-
-    linker[label="Dynamic linker"];
-
-    execution[label="Maya runs"];
-
-    exe:f:e -> linker[color="green"];
-    dll -> exe[style="dashed", label="    Tells OS to load the library into memory"];
-    dll:i -> linker[color="red"];
-    dll:f:e -> linker[color="green"];
-    linker -> memory:f[color="green", label="    patches over", fontcolor="green"];
-    exe:i:e -> linker -> memory:i[color="red"];
-    dll:et:s -> exe[color="lightblue", label="    reads addresses of functions", fontcolor="blue"];
-    windowsCode -> linker[label="    Calls here could be from either the DLL or Maya", color="green", fontcolor="green"];
-
-    memory:i:e -> execution:w;
+	return;
 }
+```
 
-%}
+You should be able to tell what this does at a glance. Simple and
+straightforward. However, instead of writing a bunch of boilerplate and an
+``MPxCommand`` to fire off this function, we're going to skip all of that expose
+it directly to Python instead. Which means we get to write a whole different set
+of boilerplate instead!
 
-*Sorry, GraphViz (which is what I use to generate these diagrams) is a little
-difficult to wrangle into producing a nice shape*.
+```
+#include "maya_python_c_ext_py_hello_world.h"
+#include "maya_python_c_ext_hello_world.h"
 
-Basically, we see that things aren't that different; all that really happens is
-that Maya will now load in our ``.dll`` library, read the addresses of functions
-from the exports table, presumably do whatever it needs to do (i.e. call
-``deform()`` or ``compute()``, for example), which then in turn the dynamic
-linker will patch over with calls from Windows functions (if they happen to be
-used in those function calls), before finally executing the code from memory and
-thus performing the work we'd like (i.e. the mesh deforms, the animation plays,
-the entire thing crashes etc.)
+#include <Python.h>
 
-!!! tip
-    Casey Muratori did a great job of giving a more Windows-specific generic
-    overview of this entire topic on the Handmade Hero stream; I would highly
-    recommend watching it as well as he talks about other details that are of
-    interest, such as how memory paging works, along with the **Virtual Memory
-    Address System (VMAS)**, and the differences between *physical* and
-    *virtual* memory. There are other things to learn, such as **Address Space
-    Layout Randomization** (ASLR), and all the other minutae related to those
-    concepts that we won't be covering within the scope of this tutorial.
+#include <stdio.h>
 
-    The video is available [here](https://hero.handmade.network/episode/intro-to-c/day5).
 
-Hopefully all of the above made some sense! Next, we'll finally get to start
-writing some code to start to get this implemented, and in the process,
-hopefully learn a lot more about how memory works in general!.
+static const char HELLO_WORLD_MAYA_DOCSTRING[] = "Says hello world!";
+
+static PyObject *pyHelloWorldMaya(PyObject *self, PyObject *args);
+
+static PyObject *pyHelloWorldMaya(PyObject *self, PyObject *args)
+{
+	const char *inputString;
+	if (!PyArg_ParseTuple(args, "s", &inputString)) {
+		return NULL;
+	}
+
+	PyGILState_STATE pyGILState = PyGILState_Ensure();
+
+	helloWorldMaya();
+
+	PyObject *result = Py_BuildValue("s", inputString);
+
+	PyGILState_Release(pyGILState);
+
+	return result;
+}
+```
+
+Ok, I typed a bunch of stuff up there that seems awfully scary. Let's break this
+down line-by-line:
+
+```
+#include <Python.h>
+
+static const char HELLO_WORLD_MAYA_DOCSTRING[] = "Says hello world!";
+
+```
+
+This is fairly straightforward; I'm writing a Python C extension and I'm going
+to be using functionality from the Python libraries. I need the header.
+
+I also define a docstring that I would like my function to have. I know, _fancy_.
+
+```
+static PyObject *pyHelloWorldMaya(PyObject *self, PyObject *args);
+```
+
+What is a ``PyObject``? If you look in the Python source code, you might lose
+your sanity, so I'll summarize here: it's basically a typedef'ed type that
+Python uses to store information about a pointer to an object, so that it can
+treat the ``PyObject`` _itself as an object_. Yes, this is Inception-mode.
+
+The reason for this is that in a release build, the ``PyObject`` only contains
+the reference count for the object (which is used for determining when the
+Python garbage collector is free to release the memory allocated to the object),
+along with a pointer to the corresponding _type object_.
+
+
+### Garbage collection ###
+
+Python has an in-built garbage collector, which is another way of saying
+that it attempts to manage the memory for you for the objects that you
+use. There's actually two separate collectors, one being the **reference
+counting** collector and the other **generational** collector, available in
+the ``gc`` module, but we'll focus on the reference-counting one for
+now.
+
+How it works is that every object owned by Python (which is really just
+a reference to an _actual_ object with the _actual_ data) has a simple counter
+that tracks how many times a pointer to the object is copied or deleted and
+is incremented/decremented as necessary. Once the counter reaches ``0``, the
+object is free to be deallocated by the collector. It's a fairly simple
+mechanism; however, we need to make sure that we are aware of how it works
+since if we forget to manage the memory correctly, we could end up having a
+memory leak in our bindings or worse, a crash.
+
+More information on this is available [here](https://docs.python.org/3.6/c-api/intro.html#objects-types-and-reference-counts).
+
+So what's the rest of the code doing, then?
+
+
+### Parsing the input arguments ###
+
+```
+static PyObject *pyHelloWorldMaya(PyObject *self, PyObject *args)
+{
+	const char *inputString;
+	if (!PyArg_ParseTuple(args, "s", &inputString)) {
+		return NULL;
+	}
+
+	PyGILState_STATE pyGILState = PyGILState_Ensure();
+
+	helloWorldMaya();
+
+	PyObject *result = Py_BuildValue("s", inputString);
+
+	PyGILState_Release(pyGILState);
+
+	return result;
+}
+```
+
+The signature of the function is something that Python expects from a
+``PyCFunction`` type. This is just something you'll have to accept as convention
+for now; we'll see why this is enforced later when we register this function in
+the _function table_. Basically our function must return a pointer to a
+``PyObject``, and take two pointers to ``PyObject``s as well.
+
+The first few lines make use of ``PyArg_ParseTuple`` to basically parse the
+arguments given to the Python function. For example, if I called the function
+``foo_bar('oh noes')``, ``PyArg_ParseTuple`` would, with the given arguments
+specified, interpret the first argument as a string, and store that in the
+``inputString`` pointer. If you look at
+the [documentation](https://docs.python.org/2/c-api/arg.html)
+for it, you'll realize that the format specifiers are similar to that of
+``printf`` in the standard library, but **be warned:** there are subtle
+differences.
+
+The next call we make is something you might not find in other "HOW TO WRITE
+YOUR OWN PYTHON C EXTENSION" tutorials, and that's because it's Maya-specific.
+
+
+### The Global Interpreter Lock (GIL) ###
+
+This is a topic that comes up a lot, even for experienced TDs/programmers at
+work, so I thought I'd take my stab at explaining what is really at its core a
+fairly fundamental concept, if a bit complex.
+
+**The Global Interpreter Lock in Python is a mutex**. That's it.
+
+!!! tip "Mutex?"
+    Ok, so for those of us who aren't familiar with what a mutex is, it's short for
+    **mutual exclusion object**. It is basically a mechanism (more often than not
+    implemented as a simple object with a unique ID) that allows a single thread
+    within a running process to say, "Hey, I need to access this memory". The
+    program then requests (either by itself or from the OS, even) a handle that can
+    act as this program object. Once it is accquired by the thread, no other threads
+    are allowed to access that memory, or **critical section**, until the mutex
+    program object is **released** by the first thread owner.
+
+Ok, so the _actual_ implementation of the GIL goes a little beyond a simple
+mutex, but it essentially boils down to: the sole purpose of the GIL is to
+ensure that Python objects (and the memory they point to) are protected from
+multi-threaded access, making sure that Python bytecode can only be executed
+from a single thread at a single time. This is required in the CPython
+implementation (which is what Maya's Python, and likely your system's Python
+installation as well is using) since the memory management implementation in
+CPython **is not thread-safe**.
+
+In order to ensure that we follow the conventions required by CPython
+extensions, we must **accquire the GIL** before executing Python code
+ourselves. This is _even more important_ in Maya, because in Maya, **the main
+thread is not a Python thread**. (In case that wasn't already obvious, otherwise
+things would be much, much slower.)
+
+What we'll be doing is registering the GIL towards the main thread so that the
+Python interpreter can "see" it and execute our code. While normally in a Python
+C extension you probably wouldn't care about this, or would use
+``PyEval_SaveThread`` and ``PyEval_RestoreThread`` instead, we make use of
+``PyGILState_Ensure`` and ``PyGILState_Release`` to accquire and release the
+lock. Thus, we see these two calls surrounding the beginning and end of the
+relevant critical section that calls Python code.
+
+### Returning ``PyObject`` values ###
+
+### Writing the build script ###

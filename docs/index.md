@@ -41,19 +41,76 @@ our C++ code:
   work and outside of work from junior/senior people alike about the state of
   the Python OpenMaya bindings. My primary goal here is to show that it's
   actually fairly trivial to write your own bindings if needed.
+  
+  
+## Why not use a wrapper for this? ##
+
+When it comes to generating Python bindings for a C/C++ API, there are a
+plethora of tools out there. 
+[Boost.Python](https://www.boost.org/doc/libs/1_67_0/libs/python/doc/html/index.html),
+[SWIG](http://www.swig.org/) and more recently, [pybind11](https://github.com/pybind/pybind11)
+are all examples of wrappers that can help to automate the process of having to
+write the bindings by hand. As a matter of fact, this is how the OM1 bindings
+were generated in the first place (using SWIG). Ideally, this allows the
+programmer to focus on the implementation without worrying about the details
+involved with translating the code to Python.
+
+At least, that's the theory. As ever, in practice, everything comes down to a
+single principle: _your job is to work with memory, not write code._ If you
+don't know what you're doing with the memory, you're guaranteed to be setting
+yourself (or worse, others) up for failure. In this case, it means:
+
+* Harder-to-debug abstraction layers whenever the bindings don't work as you
+  expect. Writing Python bindings is already a level of abstraction that we're
+  accepting; the last thing needed is to add _even more_ cruft on top of that.
+  
+* pybind11, at least, does not account for the GIL by default unless you make
+  specific wrapper calls (e.g. ``call_go`` using the
+  ``call_guard``policy). Personally, after giving it a go, I see zero benefit to
+  using it over writing the bindings manually.
+  
+* Absolute control over the memory and how it's managed. Rather than code all
+  sorts of machinery in order to perform simple tasks like cleaning up
+  allocations at module destruction time, or wasting time with ``unique_ptr``
+  and ``shared_ptr`` shennanigans, I find everything is much simpler when just
+  writing the bindings by hand.
+  
+* To that point, not every project can afford to use a C++11-compliant
+  compiler. (Remember, as recently as Maya 2016, the official compiler version
+  was not even C++11 capable)!
+  
+* The historical results speak for themselves: The Maya OM1 bindings, which were
+  generated via SWIG, are far slower than the hand-written bindings in OM2
+  (which are also incidentally far easier to use and don't require the use of
+  other wrapper classes such as ``MScriptUtil`` to handle converting between
+  pointer and POD types). If you're going to eat of the cost of making bindings
+  between a scripting language and a compiled one, you might as well try to
+  minimize the overhead in the process. At scale, automatically-generated
+  bindings just don't work.
+  
+!!! tip
+    I encourage you to try the alternatives stated and decide for yourself which
+    approach is easier at scale. Here, however, I will focus only on hand-writing
+    the bindings and not on any unnecessary wrappers.
 
 
-### How is this going to work? ###
+## How is this going to work? ##
 
-We're going to eschew the official
-Python
+We're going to eschew the official Python
 [``distutils``](https://docs.python.org/2/extending/building.html#building) for
 this, and compile everything on our own. Before you start shouting "That's
 un-Pythonic!" from the top of your horse, bear with it: there are very good
 reasons for this which I'll explain later. 
 
-We'll be making two types of Maya Python C++ Extensions: the first will actually
-be TODO
+We'll be making two types of Maya Python C++ Extensions: the first will be a
+traditional Python C extension that makes use of the Maya libraries; the second,
+however, will be an actual Maya plugin that exposes the Python bindings
+automatically once it's loaded in Maya. The nice thing about the second approach
+is that if you want to expose your bindings from a Maya plugin, you can do so
+just by loading the plugin itself without having add the ``.pyd/.so`` file onto
+the ``PYTHONPATH``. It also sidesteps any dependency issues nicely (i.e. you
+know for sure that your Python function call will succeed without having to
+check if the required Maya plugin has yet been loaded.)
 
 
 ## Requirements ##
@@ -95,6 +152,10 @@ information is appropriate, it will appear in the following form:
 
 - **Basic knowledge of how Maya plugins work and how to write/build them**. 
   The repository has sample build scripts designed to work on Windows and Linux.
+  
+- **Basic knowledge of Python**. Obviously, you'll need to know basic Python
+  syntax and the various data types available, since we're going to be
+  marshaling them between it and C++.
 
 In the next section, we'll go over a high-level overview of how a Python C/C++
 extension works.

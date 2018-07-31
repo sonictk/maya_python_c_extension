@@ -13,6 +13,8 @@ theme:
 pages:
     - About: index.md
     - Getting Started: getting_started.md
+    - Writing the Module: writing_the_python_standalone_module.md
+    - Exposing the Bindings Directly: exposing_the_bindings_in_maya_plugin.md
     - Credits: credits.md
 
 
