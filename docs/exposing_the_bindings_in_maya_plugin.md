@@ -80,7 +80,7 @@ differences, so let's go over them:
 
 Here, we check if the Python interpreter has been initialized yet, and if not,
 we initialize it. This really shouldn't happen in practice, but it doesn't hurt
-to be safe.
+    to be safe.
 
 ```
         Py_INCREF(module);
@@ -97,6 +97,60 @@ uninitializing Python if we already initialized it?
 
 ## Managing module reference counting ##
 
+Let's talk about the reference counting issue first. Conventional wisdom might 
+make it seem that we should probably be decrementing the reference count for the 
+module in the ``uninitializePlugin`` call for the module. You're free to try this 
+as well (and you might not even notice any unwanted side-effects at first!). 
+
+However, try this:
+
+```
+import maya.cmds as cmds
+
+cmds.loadPlugin("maya_python_c_ext")
+from maya_python_c_ext import *
+hello_world_maya("this works")
+
+cmds.unloadPlugin("maya_python_c_ext")
+cmds.loadPlugin("maya_python_c_ext")
+
+hello_world_maya("hmm, I wonder what happens now...?")
+```
+
+If you want to go ahead and try it yourself, go ahead. I'll wait.
+
+...
+
+```
+Stack trace:
+  python27.dll!PyEval_GetFuncDesc
+  python27.dll!PyEval_EvalFrameEx
+  python27.dll!PyEval_EvalCodeEx
+  python27.dll!PyRun_FileExFlags
+  python27.dll!PyRun_InteractiveOneFlags
+  python27.dll!PyRun_InteractiveLoopFlags
+  python27.dll!PyRun_AnyFileExFlags
+  python27.dll!Py_Main
+  KERNEL32.DLL!BaseThreadInitThunk
+  ntdll.dll!RtlUserThreadStart
+
+Result: untitled
+Fatal Error. Attempting to save in C:/Users/sonictk/AppData/Local/Temp/sonictk.20180801.0110.ma
+```
+
+...in case you skipped right here without trying it yourself (tsk, tsk), you
+probably noticed what happened; you segfaulted the Python interpreter. Why is
+this?
+
+Well, recall the rules for the reference garbage collector in Python; once the
+reference count reaches zero, the garbage collector is free to de-allocate the
+memory for the object that the counter is associated with. Thus, when we
+decrement the reference count to the module once we unload the plugin, shouldn't
+the module be reloaded again once we make the second call to ``Py_InitModule``?
+
+Not exactly, due to
+an [unfortunate quality of Python](https://bugs.python.org/issue9072): the lack
+of ability to **unload modules**.
 
 
 ## Running it in Maya ##

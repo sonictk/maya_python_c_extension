@@ -5,6 +5,8 @@ const char *kAUTHOR = "Siew Yi Liang";
 const char *kVERSION = "1.0.0";
 const char *kREQUIRED_API_VERSION = "Any";
 
+PyObject *module = NULL;
+
 
 MStatus initializePlugin(MObject obj)
 {
@@ -20,7 +22,7 @@ MStatus initializePlugin(MObject obj)
 		// crashing Maya.
 		PyGILState_STATE pyGILState = PyGILState_Ensure();
 
-		PyObject *module = Py_InitModule3("maya_python_c_ext",
+		module = Py_InitModule3("maya_python_c_ext",
 										  mayaPythonCExtMethods,
 										  MAYA_PYTHON_C_EXT_DOCSTRING);
 
@@ -50,7 +52,10 @@ MStatus uninitializePlugin(MObject obj)
 	// "older" code (if the library changed between compilations), this is
 	// unlikely to happen in production. It's more likely that plugins will get
 	// loaded/unloaded at times rather than the end-user re-compiling the plugin
-	// to have different behaviour in the bindings.
+	// two have different behaviour in the bindings.
+	// TODO: (sonictk) Need to investigate this further, this claim doesn't seem
+	// quite right now upon further testing
+	Py_DECREF(module);
 
 	return status;
 }
