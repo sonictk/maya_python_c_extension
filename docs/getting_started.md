@@ -71,7 +71,7 @@ paths on your ``PYTHONPATH``, along with the namespaces of your modules.
 Before we write bindings to anything, we need _something_ to actually bind
 to. Let's start with the timeless ``hello world``.
 
-```
+```c++
 #include <maya/MGlobal.h>
 
 
@@ -85,11 +85,11 @@ void helloWorldMaya()
 
 You should be able to tell what this does at a glance. Simple and
 straightforward. However, instead of writing a bunch of boilerplate and an
-``MPxCommand`` to fire off this function, we're going to skip all of that expose
-it directly to Python instead. Which means we get to write a whole different set
+``MPxCommand`` to fire off this function, we're going to skip all of that and  expose
+it directly to Python. Which means we get to write a whole different set
 of boilerplate instead!
 
-```
+```c++
 #include "maya_python_c_ext_py_hello_world.h"
 #include "maya_python_c_ext_hello_world.h"
 
@@ -124,7 +124,7 @@ static PyObject *pyHelloWorldMaya(PyObject *self, PyObject *args)
 Ok, I typed a bunch of stuff up there that seems awfully scary. Let's break this
 down line-by-line:
 
-```
+```c++
 #include <Python.h>
 
 static const char HELLO_WORLD_MAYA_DOCSTRING[] = "Says hello world!";
@@ -171,12 +171,34 @@ memory leak in our bindings or worse, a crash.
 
 More information on this is available [here](https://docs.python.org/3.6/c-api/intro.html#objects-types-and-reference-counts).
 
+!!! tip "The ``gc`` module in Python"
+    Some of you might already be aware that Python comes with a ``gc`` module,
+    which provides an interface to the *generational garbage collector*. While the
+    concept of two garbage collectors working together in unison sounds like a
+    receipe for disaster (and sometimes it is!), there's a method behind the
+    madness: the reference counting collector, due to being straightforward, is
+    also fast, but thus comes at a price: it cannot detect _reference cycles_.
+    
+    That is to say, if you have one or more objects referencing each other, in
+    terms of _graph theory_, you have a _cyclic dependency_. A simple example in
+    code would be something like:
+    
+    ```
+    a.attribute1 = b;
+    b.other_attribute = a
+    ```
+    
+    In such a case, the RC garbage collector would not reclaim the memory for
+    either ``a`` or ``b``, even if they referred to nothing else. That's where
+    the second garbage collector steps in.
+    
+
 So what's the rest of the code doing, then?
 
 
 ### Parsing the input arguments ###
 
-```
+```c++
 static PyObject *pyHelloWorldMaya(PyObject *self, PyObject *args)
 {
     const char *inputString;
@@ -230,14 +252,15 @@ The way I like to think about the GIL in Python is the following statement:
 That's it.
 
 !!! tip "Mutex?"
-    Ok, so for those of us who aren't familiar with what a mutex is, it's short for
-    **mutual exclusion object**. It is basically a mechanism (more often than not
-    implemented as a simple object with a unique ID) that allows a single thread
-    within a running process to say, "Hey, I need to access this memory". The
-    program then requests (either by itself or from the OS, even) a handle that can
-    act as this program object. Once it is accquired by the thread, no other threads
-    are allowed to access that memory, or **critical section**, until the mutex
-    program object is **released** by the first thread owner.
+    Ok, so for those of us who aren't familiar with what a mutex is, it's short
+    for **mutual exclusion object**. It is basically a mechanism (more often
+    than not implemented as a simple object with a unique ID) that allows a
+    single thread within a running process to say, "Hey, I need to access this
+    memory". The program then requests (either by itself or from the OS, even) a
+    handle that can act as this program object. Once it is accquired by the
+    thread, no other threads are allowed to access that memory (also known in
+    parlance as a **critical section**), until the mutex program object is
+    **released** by the first thread owner.
 
 Ok, so the _actual_ implementation of the GIL goes a little beyond a simple
 mutex, but it essentially boils down to: the sole purpose of the GIL is to
@@ -267,7 +290,7 @@ relevant critical section that calls Python code.
 
 We see that the next unfamiliar statement is the line:
 
-```
+```c++
     PyObject *result = Py_BuildValue("s", inputString);
 ```
 

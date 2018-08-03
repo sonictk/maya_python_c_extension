@@ -44,17 +44,6 @@ MStatus uninitializePlugin(MObject obj)
 {
 	MStatus status;
 
-	// NOTE: (sonictk) We do not decrement the reference count to the module
-	// here, because on the off-chance that someone unloads the plugin and then
-	// reloads it after, we want them to be able to still use the same function
-	// call without having to re-import the module again fresh. Otherwise, we
-	// will trigger a segfault.  While this means an end-user could be running
-	// "older" code (if the library changed between compilations), this is
-	// unlikely to happen in production. It's more likely that plugins will get
-	// loaded/unloaded at times rather than the end-user re-compiling the plugin
-	// two have different behaviour in the bindings.
-	// TODO: (sonictk) Need to investigate this further, this claim doesn't seem
-	// quite right now upon further testing
 	Py_DECREF(module);
 
 	return status;

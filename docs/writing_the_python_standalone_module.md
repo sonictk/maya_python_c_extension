@@ -5,7 +5,7 @@
 The entry point, as mentioned previously, must have a specific function
 singature based off the desired module name.
 
-```
+```c++
 static char MAYA_PYTHON_C_EXT_DOCSTRING[] = "An example Python C extension that makes use of Maya functionality.";
 
 static PyMethodDef mayaPythonCExtMethods[] = {
@@ -78,14 +78,14 @@ After the usual boilerplate of setting up the Visual Studio environment,
 creating a build directory and all that jazz, we get to something interesting in
 the script:
 
-```
+```batch
 set CommonCompilerFlags=%CommonCompilerFlags% /I"%MayaRootDir%\include" /I "%MayaRootDir%\include\python2.7"
 ```
 
 Notice that we're not including the system Python headers directly. We also
 don't link against the system Python either:
 
-```
+```batch
 set CommonLinkerFlags=%CommonLinkerFlags% "%MayaLibraryDir%\OpenMaya.lib" "%MayaLibraryDir%\OpenMayaAnim.lib" "%MayaLibraryDir%\OpenMayaFX.lib" "%MayaLibraryDir%\OpenMayaRender.lib" "%MayaLibraryDir%\OpenMayaUI.lib" "%MayaLibraryDir%\Foundation.lib" "%MayaLibraryDir%\IMFbase.lib" "%MayaLibraryDir%\clew.lib" "%MayaLibraryDir%\Image.lib" "%MayaLibraryDir%\python27.lib"
 ```
 
@@ -102,7 +102,7 @@ functionality in our module that wouldn't work in standard Python.)
 
 There's one more thing we need to do:
 
-```
+```batch
 set PythonModuleExtension=pyd
 
 set PythonModuleLinkerFlagsCommon=/export:initmaya_python_c_ext /out:"%BuildDir%\%ProjectName%.%PythonModuleExtension%"
@@ -128,7 +128,7 @@ Maya devkit is placed in there as well, or else edit the
 
 Run the following code in a ``mayapy`` interpreter:
 
-```
+```python
 import maya.standalone
 maya.standalone.initialize()
 

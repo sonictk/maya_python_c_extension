@@ -1,3 +1,4 @@
+import sys
 import os
 import maya.standalone
 
@@ -16,6 +17,9 @@ if __name__ == '__main__':
     mpce.hello_world_maya('my string')
 
     cmds.unloadPlugin('maya_python_c_ext')
+
+    maya_python_c_ext = None
+    del sys.modules['maya_python_c_ext']
 
     mpce.hello_world_maya('my string')
 
