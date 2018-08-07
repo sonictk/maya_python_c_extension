@@ -5,7 +5,7 @@
 #include <maya/MGlobal.h>
 
 
-static PyObject *pyHelloWorldMaya(PyObject *self, PyObject *args)
+static PyObject *pyHelloWorldMaya(PyObject *module, PyObject *args)
 {
 	const char *inputString;
 	if (!PyArg_ParseTuple(args, "s", &inputString)) {

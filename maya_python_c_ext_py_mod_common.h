@@ -7,7 +7,7 @@
 #include "maya_python_c_ext_py_util.h"
 
 
-static char MAYA_PYTHON_C_EXT_DOCSTRING[] = "An example Python C extension that makes use of Maya functionality.";
+static const char MAYA_PYTHON_C_EXT_DOCSTRING[] = "An example Python C extension that makes use of Maya functionality.";
 
 
 // NOTE: (sonictk) This declares the available methods for the module

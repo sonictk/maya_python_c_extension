@@ -10,6 +10,8 @@ if __name__ == '__main__':
 
     import maya_python_c_ext as mpce
 
+    print mpce.are_bindings_valid()
+
     mpce.hello_world_maya('my string')
 
     maya.standalone.uninitialize()

@@ -1,6 +1,7 @@
 #ifndef MAYA_PYTHON_C_EXT_PLUGIN_MAIN_H
 #define MAYA_PYTHON_C_EXT_PLUGIN_MAIN_H
 
+
 // NOTE: (sonictk) Python has its own defines that require it to be included ahead
 // of everything else.
 #include <Python.h>

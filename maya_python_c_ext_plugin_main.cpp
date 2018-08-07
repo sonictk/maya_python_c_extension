@@ -23,14 +23,15 @@ MStatus initializePlugin(MObject obj)
 		PyGILState_STATE pyGILState = PyGILState_Ensure();
 
 		module = Py_InitModule3("maya_python_c_ext",
-										  mayaPythonCExtMethods,
-										  MAYA_PYTHON_C_EXT_DOCSTRING);
+								mayaPythonCExtMethods,
+								MAYA_PYTHON_C_EXT_DOCSTRING);
 
 		MGlobal::displayInfo("Registered Python bindings!");
 
 		if (module == NULL) {
 			return MStatus::kFailure;
 		}
+
 		Py_INCREF(module);
 
 		PyGILState_Release(pyGILState);
