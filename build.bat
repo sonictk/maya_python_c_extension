@@ -123,11 +123,11 @@ set MayaPluginLinkerFlagsCommon=/export:initializePlugin /export:uninitializePlu
 set PythonModuleLinkerFlagsCommon=/export:initmaya_python_c_ext /out:"%BuildDir%\%ProjectName%.%PythonModuleExtension%"
 
 
-set MayaPluginLinkerFlagsRelease=%CommonLinkerFlagsRelease% %CommonLinkerFlags% %MayaPluginLinkerFlagsCommon%
-set MayaPluginLinkerFlagsDebug=%CommonLinkerFlagsDebug% %CommonLinkerFlags% %MayaPluginLinkerFlagsCommon%
+set MayaPluginLinkerFlagsRelease=%CommonLinkerFlagsRelease% %MayaPluginLinkerFlagsCommon%
+set MayaPluginLinkerFlagsDebug=%CommonLinkerFlagsDebug% %MayaPluginLinkerFlagsCommon%
 
-set PythonModuleLinkerFlagsRelease=%CommonLinkerFlagsRelease% %CommonLinkerFlags% %PythonModuleLinkerFlagsCommon%
-set PythonModuleLinkerFlagsDebug=%CommonLinkerFlagsDebug% %CommonLinkerFlags% %PythonModuleLinkerFlagsCommon%
+set PythonModuleLinkerFlagsRelease=%CommonLinkerFlagsRelease% %PythonModuleLinkerFlagsCommon%
+set PythonModuleLinkerFlagsDebug=%CommonLinkerFlagsDebug% %PythonModuleLinkerFlagsCommon%
 
 
 if "%BuildType%"=="debug" (
