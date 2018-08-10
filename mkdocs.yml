@@ -19,7 +19,7 @@ pages:
 
 
 repo_name: 'maya_python_c_extension'
-repo_url: 'https://bitbucket.org/sonictk/maya_python_c_extension'
+repo_url: 'https://github.com/sonictk/maya_python_c_extension'
 
 
 markdown_extensions:
