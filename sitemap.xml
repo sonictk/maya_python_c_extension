@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+
+    
+    <url>
+     <loc>/</loc>
+     <lastmod>2018-08-10</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+    
+
+    
+    <url>
+     <loc>/getting_started/</loc>
+     <lastmod>2018-08-10</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+    
+
+    
+    <url>
+     <loc>/writing_the_python_standalone_module/</loc>
+     <lastmod>2018-08-10</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+    
+
+    
+    <url>
+     <loc>/exposing_the_bindings_in_maya_plugin/</loc>
+     <lastmod>2018-08-10</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+    
+
+    
+    <url>
+     <loc>/credits/</loc>
+     <lastmod>2018-08-10</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+    
+
+</urlset>

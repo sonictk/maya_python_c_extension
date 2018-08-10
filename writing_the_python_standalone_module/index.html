@@ -1,0 +1,619 @@
+
+
+
+
+<!DOCTYPE html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      <meta http-equiv="x-ua-compatible" content="ie=edge">
+      
+        <meta name="description" content="Tutorial on how to expose Python bindings to your Maya C++ code">
+      
+      
+      
+        <meta name="author" content="Siew Yi Liang">
+      
+      
+        <meta name="lang:clipboard.copy" content="Copy to clipboard">
+      
+        <meta name="lang:clipboard.copied" content="Copied to clipboard">
+      
+        <meta name="lang:search.language" content="en">
+      
+        <meta name="lang:search.result.none" content="No matching documents">
+      
+        <meta name="lang:search.result.one" content="1 matching document">
+      
+        <meta name="lang:search.result.other" content="# matching documents">
+      
+        <meta name="lang:search.tokenizer" content="[\s\-]+">
+      
+      <link rel="shortcut icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-0.17.2, mkdocs-material-2.2.2">
+    
+    
+      
+        <title>Writing the Module - Writing a Maya Python C++ Extension</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/application.7a4cdee3.css">
+      
+        <link rel="stylesheet" href="../assets/stylesheets/application-palette.792431c1.css">
+      
+    
+    
+      <script src="../assets/javascripts/modernizr.1aa3b519.js"></script>
+    
+    
+      
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700|Roboto+Mono">
+        <style>body,input{font-family:"Roboto","Helvetica Neue",Helvetica,Arial,sans-serif}code,kbd,pre{font-family:"Roboto Mono","Courier New",Courier,monospace}</style>
+      
+      <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    
+    
+    
+  </head>
+  
+    
+    
+    
+      <body data-md-color-primary="blue" data-md-color-accent="deep-orange">
+    
+  
+    <svg class="md-svg">
+      <defs>
+        
+        
+          <svg xmlns="http://www.w3.org/2000/svg" width="416" height="448" viewBox="0 0 416 448" id="github"><path fill="currentColor" d="M160 304q0 10-3.125 20.5t-10.75 19T128 352t-18.125-8.5-10.75-19T96 304t3.125-20.5 10.75-19T128 256t18.125 8.5 10.75 19T160 304zm160 0q0 10-3.125 20.5t-10.75 19T288 352t-18.125-8.5-10.75-19T256 304t3.125-20.5 10.75-19T288 256t18.125 8.5 10.75 19T320 304zm40 0q0-30-17.25-51T296 232q-10.25 0-48.75 5.25Q229.5 240 208 240t-39.25-2.75Q130.75 232 120 232q-29.5 0-46.75 21T56 304q0 22 8 38.375t20.25 25.75 30.5 15 35 7.375 37.25 1.75h42q20.5 0 37.25-1.75t35-7.375 30.5-15 20.25-25.75T360 304zm56-44q0 51.75-15.25 82.75-9.5 19.25-26.375 33.25t-35.25 21.5-42.5 11.875-42.875 5.5T212 416q-19.5 0-35.5-.75t-36.875-3.125-38.125-7.5-34.25-12.875T37 371.5t-21.5-28.75Q0 312 0 260q0-59.25 34-99-6.75-20.5-6.75-42.5 0-29 12.75-54.5 27 0 47.5 9.875t47.25 30.875Q171.5 96 212 96q37 0 70 8 26.25-20.5 46.75-30.25T376 64q12.75 25.5 12.75 54.5 0 21.75-6.75 42 34 40 34 99.5z"/></svg>
+        
+      </defs>
+    </svg>
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="drawer">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="search">
+    <label class="md-overlay" data-md-component="overlay" for="drawer"></label>
+    
+      <header class="md-header" data-md-component="header">
+  <nav class="md-header-nav md-grid">
+    <div class="md-flex">
+      <div class="md-flex__cell md-flex__cell--shrink">
+        <a href=".." title="Writing a Maya Python C++ Extension" class="md-header-nav__button md-logo">
+          
+            <i class="md-icon"></i>
+          
+        </a>
+      </div>
+      <div class="md-flex__cell md-flex__cell--shrink">
+        <label class="md-icon md-icon--menu md-header-nav__button" for="drawer"></label>
+      </div>
+      <div class="md-flex__cell md-flex__cell--stretch">
+        <div class="md-flex__ellipsis md-header-nav__title" data-md-component="title">
+          
+            
+              <span class="md-header-nav__topic">
+                Writing a Maya Python C++ Extension
+              </span>
+              <span class="md-header-nav__topic">
+                Writing the Module
+              </span>
+            
+          
+        </div>
+      </div>
+      <div class="md-flex__cell md-flex__cell--shrink">
+        
+          
+            <label class="md-icon md-icon--search md-header-nav__button" for="search"></label>
+            
+<div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="search"></label>
+  <div class="md-search__inner">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" required placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="query">
+      <label class="md-icon md-search__icon" for="search"></label>
+      <button type="reset" class="md-icon md-search__icon" data-md-component="reset">&#xE5CD;</button>
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="result">
+          <div class="md-search-result__meta">
+            Type to start searching
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+          
+        
+      </div>
+      
+        <div class="md-flex__cell md-flex__cell--shrink">
+          <div class="md-header-nav__source">
+            
+
+
+  
+
+
+  <a href="https://github.com/sonictk/maya_python_c_extension" title="Go to repository" class="md-source" data-md-source="github">
+    
+      <div class="md-source__icon">
+        <svg viewBox="0 0 24 24" width="24" height="24">
+          <use xlink:href="#github" width="24" height="24"></use>
+        </svg>
+      </div>
+    
+    <div class="md-source__repository">
+      maya_python_c_extension
+    </div>
+  </a>
+
+          </div>
+        </div>
+      
+    </div>
+  </nav>
+</header>
+    
+    <div class="md-container">
+      
+        
+      
+      
+      <main class="md-main">
+        <div class="md-main__inner md-grid" data-md-component="container">
+          
+            
+              <div class="md-sidebar md-sidebar--primary" data-md-component="navigation">
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    <nav class="md-nav md-nav--primary" data-md-level="0">
+  <label class="md-nav__title md-nav__title--site" for="drawer">
+    <span class="md-nav__button md-logo">
+      
+        <i class="md-icon"></i>
+      
+    </span>
+    Writing a Maya Python C++ Extension
+  </label>
+  
+    <div class="md-nav__source">
+      
+
+
+  
+
+
+  <a href="https://github.com/sonictk/maya_python_c_extension" title="Go to repository" class="md-source" data-md-source="github">
+    
+      <div class="md-source__icon">
+        <svg viewBox="0 0 24 24" width="24" height="24">
+          <use xlink:href="#github" width="24" height="24"></use>
+        </svg>
+      </div>
+    
+    <div class="md-source__repository">
+      maya_python_c_extension
+    </div>
+  </a>
+
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href=".." title="About" class="md-nav__link">
+      About
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="../getting_started/" title="Getting Started" class="md-nav__link">
+      Getting Started
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+  
+
+
+  <li class="md-nav__item md-nav__item--active">
+    
+    <input class="md-toggle md-nav__toggle" data-md-toggle="toc" type="checkbox" id="toc">
+    
+      
+    
+    
+      <label class="md-nav__link md-nav__link--active" for="toc">
+        Writing the Module
+      </label>
+    
+    <a href="./" title="Writing the Module" class="md-nav__link md-nav__link--active">
+      Writing the Module
+    </a>
+    
+      
+<nav class="md-nav md-nav--secondary">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="toc">Table of contents</label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#the-entry-point" title="The entry point" class="md-nav__link">
+    The entry point
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#listing-the-available-methods" title="Listing the available methods" class="md-nav__link">
+    Listing the available methods
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#building-the-extension" title="Building the extension" class="md-nav__link">
+    Building the extension
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#running-it-in-mayapy" title="Running it in mayapy" class="md-nav__link">
+    Running it in mayapy
+  </a>
+  
+</li>
+      
+      
+      
+    </ul>
+  
+</nav>
+    
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="../exposing_the_bindings_in_maya_plugin/" title="Exposing the Bindings Directly" class="md-nav__link">
+      Exposing the Bindings Directly
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="../credits/" title="Credits" class="md-nav__link">
+      Credits
+    </a>
+  </li>
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="toc">
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+<nav class="md-nav md-nav--secondary">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="toc">Table of contents</label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#the-entry-point" title="The entry point" class="md-nav__link">
+    The entry point
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#listing-the-available-methods" title="Listing the available methods" class="md-nav__link">
+    Listing the available methods
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#building-the-extension" title="Building the extension" class="md-nav__link">
+    Building the extension
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#running-it-in-mayapy" title="Running it in mayapy" class="md-nav__link">
+    Running it in mayapy
+  </a>
+  
+</li>
+      
+      
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content">
+            <article class="md-content__inner md-typeset">
+              
+                
+                
+                <h1 id="writing-the-maya-python-standalone-module">Writing the Maya Python standalone module<a class="headerlink" href="#writing-the-maya-python-standalone-module" title="Permanent link">&para;</a></h1>
+<h2 id="the-entry-point">The entry point<a class="headerlink" href="#the-entry-point" title="Permanent link">&para;</a></h2>
+<p>The entry point, as mentioned previously, must have a specific function
+signature based off the desired module name.</p>
+<div class="codehilite"><pre><span></span><span class="k">static</span> <span class="kt">char</span> <span class="n">MAYA_PYTHON_C_EXT_DOCSTRING</span><span class="p">[]</span> <span class="o">=</span> <span class="s">&quot;An example Python C extension that makes use of Maya functionality.&quot;</span><span class="p">;</span>
+
+<span class="k">static</span> <span class="n">PyMethodDef</span> <span class="n">mayaPythonCExtMethods</span><span class="p">[]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="p">{</span><span class="s">&quot;hello_world_maya&quot;</span><span class="p">,</span> <span class="n">pyHelloWorldMaya</span><span class="p">,</span> <span class="n">METH_VARARGS</span><span class="p">,</span> <span class="n">HELLO_WORLD_MAYA_DOCSTRING</span><span class="p">},</span>
+    <span class="p">{</span><span class="nb">NULL</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">}</span>
+<span class="p">};</span>
+
+<span class="k">extern</span> <span class="s">&quot;C&quot;</span> <span class="n">PyMODINIT_FUNC</span> <span class="n">initmaya_python_c_ext</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="n">PyObject</span> <span class="o">*</span><span class="n">module</span> <span class="o">=</span> <span class="n">Py_InitModule3</span><span class="p">(</span><span class="s">&quot;maya_python_c_ext&quot;</span><span class="p">,</span>
+                                      <span class="n">mayaPythonCExtMethods</span><span class="p">,</span>
+                                      <span class="n">MAYA_PYTHON_C_EXT_DOCSTRING</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">module</span> <span class="o">==</span> <span class="nb">NULL</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">return</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>Alright, let's break this down bit-by-bit again. The first line is fairly
+obvious; we're just defining a docstring for the module itself.</p>
+<p>The second line, however, introduces a new <code>PyMethodDef</code> type: this is what
+we're going to use for defining the <em>function table</em> available in our module to
+the Python interpreter.</p>
+<h2 id="listing-the-available-methods">Listing the available methods<a class="headerlink" href="#listing-the-available-methods" title="Permanent link">&para;</a></h2>
+<p><code>PyMethodDef</code> is essentially a structure with 4 fields: the name of the
+function desired (i.e. what we will actually type in the Python interpreter when
+calling it), the callback to be executed, an enum indicating the type of
+arguments that it accepts, and the docstring for the function itself that will
+be displayed when someone calls <code>.__doc__</code> on the function object in the
+Python interpreter. We define <code>mayaPythonCExtMethods</code> as an array of these
+structures, with a <em>sentinel value</em> of a structure with <code>NULL</code> fields to
+indicate the bounds of the array.</p>
+<p>We then pass that to the call <code>Py_InitModule3</code> in our entry point
+<code>initmaya_python_c_ext</code>, which will allow Python to register our module and
+register the table, thus making the functions available for use in the
+interpreter. We export the entry point with <code>extern "C"</code> so that the compiler
+doesn't
+<a href="https://sonictk.github.io/maya_hot_reload_example_public/getting_somewhere/#name-mangling-visibility">mangle</a> the
+name of the symbol when it is compiled.</p>
+<p>Ok, now we have all the code written. (Wasn't that fast?) We just need to
+actually build the <code>.pyd</code>now so that we can use it.</p>
+<h2 id="building-the-extension">Building the extension<a class="headerlink" href="#building-the-extension" title="Permanent link">&para;</a></h2>
+<p>This is where I will stray a little from past tutorials, and even the official
+Python documentation: we will not be making use of <code>distutils</code> or CMake or
+anything like that. We will write a <code>build.bat</code>. The <code>build.bat</code> will build
+the code, no other nonsense involved. (And trust me, if you go down the
+<code>distutils</code> route, there is a <em>whole lot</em> of involvement.)</p>
+<p>The <code>build.bat</code> script is provided in the
+<a href="https://bitbucket.org/sonictk/maya_python_c_extension">code for this repository</a>. 
+Most of it is fairly straightforward if you understand batch file syntax on Windows,
+so I'll only focus on the parts that concern this project.</p>
+<div class="admonition tip">
+<p class="admonition-title">Crossing the platforms</p>
+<p>On Linux, I provide a <code>build.sh</code> script, which is functionally similar to
+the Windows <code>build.bat</code>. If you're only familiar with Bash syntax, you can
+take a look at that instead.</p>
+</div>
+<p>After the usual boilerplate of setting up the Visual Studio environment,
+creating a build directory and all that jazz, we get to something interesting in
+the script:</p>
+<div class="codehilite"><pre><span></span><span class="k">set</span> <span class="nv">CommonCompilerFlags</span><span class="p">=</span><span class="nv">%CommonCompilerFlags%</span> /I<span class="s2">&quot;</span><span class="nv">%MayaRootDir%</span><span class="s2">\include&quot;</span> /I <span class="s2">&quot;</span><span class="nv">%MayaRootDir%</span><span class="s2">\include\python2.7&quot;</span>
+</pre></div>
+
+
+<p>Notice that we're not including the system Python headers directly. We also
+don't link against the system Python either:</p>
+<div class="codehilite"><pre><span></span><span class="k">set</span> <span class="nv">CommonLinkerFlags</span><span class="p">=</span><span class="nv">%CommonLinkerFlags%</span> <span class="s2">&quot;</span><span class="nv">%MayaLibraryDir%</span><span class="s2">\OpenMaya.lib&quot;</span> <span class="s2">&quot;</span><span class="nv">%MayaLibraryDir%</span><span class="s2">\OpenMayaAnim.lib&quot;</span> <span class="s2">&quot;</span><span class="nv">%MayaLibraryDir%</span><span class="s2">\OpenMayaFX.lib&quot;</span> <span class="s2">&quot;</span><span class="nv">%MayaLibraryDir%</span><span class="s2">\OpenMayaRender.lib&quot;</span> <span class="s2">&quot;</span><span class="nv">%MayaLibraryDir%</span><span class="s2">\OpenMayaUI.lib&quot;</span> <span class="s2">&quot;</span><span class="nv">%MayaLibraryDir%</span><span class="s2">\Foundation.lib&quot;</span> <span class="s2">&quot;</span><span class="nv">%MayaLibraryDir%</span><span class="s2">\IMFbase.lib&quot;</span> <span class="s2">&quot;</span><span class="nv">%MayaLibraryDir%</span><span class="s2">\clew.lib&quot;</span> <span class="s2">&quot;</span><span class="nv">%MayaLibraryDir%</span><span class="s2">\Image.lib&quot;</span> <span class="s2">&quot;</span><span class="nv">%MayaLibraryDir%</span><span class="s2">\python27.lib&quot;</span>
+</pre></div>
+
+
+<p>Why is this?</p>
+<p>Well, recall that for Maya specifically, there is a Python interpreter embedded
+directly in the application. It's also been modified slightly from the standard
+Python interpreter; in order to make sure that we don't encounter any funny
+issues down the line (read: crashes), we're going to link against Maya's version
+instead. This does mean, however, that you should not attempt to use the module
+we're building in a standard non-<code>mayapy</code> Python interpreter. (You probably
+wouldn't anyway, since the whole point is that we're making use of Maya-specific
+functionality in our module that wouldn't work in standard Python.)</p>
+<p>There's one more thing we need to do:</p>
+<div class="codehilite"><pre><span></span><span class="k">set</span> <span class="nv">PythonModuleExtension</span><span class="p">=</span>pyd
+
+<span class="k">set</span> <span class="nv">PythonModuleLinkerFlagsCommon</span><span class="p">=</span>/export:initmaya_python_c_ext /out:<span class="s2">&quot;</span><span class="nv">%BuildDir%</span><span class="s2">\</span><span class="nv">%ProjectName%</span><span class="s2">.</span><span class="nv">%PythonModuleExtension%</span><span class="s2">&quot;</span>
+</pre></div>
+
+
+<p>Remember how we declared our entry point with C-linkage above? This is where we
+export that symbol specifically. We need to do this on Windows, since symbols
+are stripped from the binary in release mode otherwise.</p>
+<p>The rest of the build script is mostly boilerplate to actually compile and link
+the module. If you have trouble understanding it, I suggest reading
+my
+<a href="https://sonictk.github.io/maya_hot_reload_example_public/getting_somewhere/#writing-the-build-script">previous tutorial</a> which
+goes over each section of the build script in greater detail.</p>
+<p>Do note: if you're going to just use my <code>build.bat</code> wholesale, make sure you
+edit the <code>MayaRootDir</code> variable to point to the root of your Maya
+installation. You should also make sure that the <code>include</code> folder from your
+Maya devkit is placed in there as well, or else edit the
+<code>MayaIncludeDir</code>variable to point to it as needed.</p>
+<div class="admonition tip">
+<p class="admonition-title">So what's wrong with <code>distutils</code>?</p>
+<p>Other than the fact that's it's yet another unnecessary abstraction and
+would require me to run a seperate <code>python setup.py build</code> step outside of
+the normal build script, it also attempts to call the wrong Visual Studio
+compiler by default, since it's concerned with what the official Python
+distribution was built against. Unfortunately, we're working with a custom
+build of Python in the case of Maya's Python interpreter, which basically
+makes the entire <code>distutils</code> build system an annoying nuinsance to work
+around. Besides, we have more control over what the compiler/linker are
+actually doing this way, without worrying about overriding any flags being
+set by default or other such distractions.</p>
+</div>
+<h2 id="running-it-in-mayapy">Running it in <code>mayapy</code><a class="headerlink" href="#running-it-in-mayapy" title="Permanent link">&para;</a></h2>
+<p>Run the following code in a <code>mayapy</code> interpreter:</p>
+<div class="codehilite"><pre><span></span><span class="kn">import</span> <span class="nn">maya.standalone</span>
+<span class="n">maya</span><span class="o">.</span><span class="n">standalone</span><span class="o">.</span><span class="n">initialize</span><span class="p">()</span>
+
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;path to the msbuild folder&#39;</span><span class="p">)</span>
+
+<span class="kn">from</span> <span class="nn">maya_python_c_ext</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="n">hello_world_maya</span><span class="p">(</span><span class="s1">&#39;oh noes&#39;</span><span class="p">)</span>
+</pre></div>
+
+
+<p>You should see:</p>
+<div class="codehilite"><pre><span></span>Hello world from the Maya Python C extension!
+oh noes
+&#39;oh noes&#39;
+</pre></div>
+
+
+<p>Great! Now in the next chapter, we'll focus on implementing one of the things
+people have been complaining about: a missing OM1 to OM2 binding.</p>
+                
+                  
+                
+              
+              
+                
+              
+            </article>
+          </div>
+        </div>
+      </main>
+      
+        
+<footer class="md-footer">
+  
+    <div class="md-footer-nav">
+      <nav class="md-footer-nav__inner md-grid">
+        
+          <a href="../getting_started/" title="Getting Started" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+            <div class="md-flex__cell md-flex__cell--shrink">
+              <i class="md-icon md-icon--arrow-back md-footer-nav__button"></i>
+            </div>
+            <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
+              <span class="md-flex__ellipsis">
+                <span class="md-footer-nav__direction">
+                  Previous
+                </span>
+                Getting Started
+              </span>
+            </div>
+          </a>
+        
+        
+          <a href="../exposing_the_bindings_in_maya_plugin/" title="Exposing the Bindings Directly" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
+            <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
+              <span class="md-flex__ellipsis">
+                <span class="md-footer-nav__direction">
+                  Next
+                </span>
+                Exposing the Bindings Directly
+              </span>
+            </div>
+            <div class="md-flex__cell md-flex__cell--shrink">
+              <i class="md-icon md-icon--arrow-forward md-footer-nav__button"></i>
+            </div>
+          </a>
+        
+      </nav>
+    </div>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-footer-copyright">
+        
+        powered by
+        <a href="http://www.mkdocs.org">MkDocs</a>
+        and
+        <a href="https://squidfunk.github.io/mkdocs-material/">
+          Material for MkDocs</a>
+      </div>
+      
+        
+  <div class="md-footer-social">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    
+      <a href="https://github.com/sonictk" class="md-footer-social__link fa fa-github"></a>
+    
+      <a href="https://twitter.com/ylsiew" class="md-footer-social__link fa fa-twitter"></a>
+    
+      <a href="https://linkedin.com/in/sonictk" class="md-footer-social__link fa fa-linkedin"></a>
+    
+  </div>
+
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    
+      <script src="../assets/javascripts/application.6cdc17f0.js"></script>
+      
+      <script>app.initialize({version:"0.17.2",url:{base:".."}})</script>
+      
+    
+    
+      
+    
+  </body>
+</html>

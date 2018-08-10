@@ -1,0 +1,875 @@
+
+
+
+
+<!DOCTYPE html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      <meta http-equiv="x-ua-compatible" content="ie=edge">
+      
+        <meta name="description" content="Tutorial on how to expose Python bindings to your Maya C++ code">
+      
+      
+      
+        <meta name="author" content="Siew Yi Liang">
+      
+      
+        <meta name="lang:clipboard.copy" content="Copy to clipboard">
+      
+        <meta name="lang:clipboard.copied" content="Copied to clipboard">
+      
+        <meta name="lang:search.language" content="en">
+      
+        <meta name="lang:search.result.none" content="No matching documents">
+      
+        <meta name="lang:search.result.one" content="1 matching document">
+      
+        <meta name="lang:search.result.other" content="# matching documents">
+      
+        <meta name="lang:search.tokenizer" content="[\s\-]+">
+      
+      <link rel="shortcut icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-0.17.2, mkdocs-material-2.2.2">
+    
+    
+      
+        <title>Exposing the Bindings Directly - Writing a Maya Python C++ Extension</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/application.7a4cdee3.css">
+      
+        <link rel="stylesheet" href="../assets/stylesheets/application-palette.792431c1.css">
+      
+    
+    
+      <script src="../assets/javascripts/modernizr.1aa3b519.js"></script>
+    
+    
+      
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700|Roboto+Mono">
+        <style>body,input{font-family:"Roboto","Helvetica Neue",Helvetica,Arial,sans-serif}code,kbd,pre{font-family:"Roboto Mono","Courier New",Courier,monospace}</style>
+      
+      <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    
+    
+    
+  </head>
+  
+    
+    
+    
+      <body data-md-color-primary="blue" data-md-color-accent="deep-orange">
+    
+  
+    <svg class="md-svg">
+      <defs>
+        
+        
+          <svg xmlns="http://www.w3.org/2000/svg" width="416" height="448" viewBox="0 0 416 448" id="github"><path fill="currentColor" d="M160 304q0 10-3.125 20.5t-10.75 19T128 352t-18.125-8.5-10.75-19T96 304t3.125-20.5 10.75-19T128 256t18.125 8.5 10.75 19T160 304zm160 0q0 10-3.125 20.5t-10.75 19T288 352t-18.125-8.5-10.75-19T256 304t3.125-20.5 10.75-19T288 256t18.125 8.5 10.75 19T320 304zm40 0q0-30-17.25-51T296 232q-10.25 0-48.75 5.25Q229.5 240 208 240t-39.25-2.75Q130.75 232 120 232q-29.5 0-46.75 21T56 304q0 22 8 38.375t20.25 25.75 30.5 15 35 7.375 37.25 1.75h42q20.5 0 37.25-1.75t35-7.375 30.5-15 20.25-25.75T360 304zm56-44q0 51.75-15.25 82.75-9.5 19.25-26.375 33.25t-35.25 21.5-42.5 11.875-42.875 5.5T212 416q-19.5 0-35.5-.75t-36.875-3.125-38.125-7.5-34.25-12.875T37 371.5t-21.5-28.75Q0 312 0 260q0-59.25 34-99-6.75-20.5-6.75-42.5 0-29 12.75-54.5 27 0 47.5 9.875t47.25 30.875Q171.5 96 212 96q37 0 70 8 26.25-20.5 46.75-30.25T376 64q12.75 25.5 12.75 54.5 0 21.75-6.75 42 34 40 34 99.5z"/></svg>
+        
+      </defs>
+    </svg>
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="drawer">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="search">
+    <label class="md-overlay" data-md-component="overlay" for="drawer"></label>
+    
+      <header class="md-header" data-md-component="header">
+  <nav class="md-header-nav md-grid">
+    <div class="md-flex">
+      <div class="md-flex__cell md-flex__cell--shrink">
+        <a href=".." title="Writing a Maya Python C++ Extension" class="md-header-nav__button md-logo">
+          
+            <i class="md-icon"></i>
+          
+        </a>
+      </div>
+      <div class="md-flex__cell md-flex__cell--shrink">
+        <label class="md-icon md-icon--menu md-header-nav__button" for="drawer"></label>
+      </div>
+      <div class="md-flex__cell md-flex__cell--stretch">
+        <div class="md-flex__ellipsis md-header-nav__title" data-md-component="title">
+          
+            
+              <span class="md-header-nav__topic">
+                Writing a Maya Python C++ Extension
+              </span>
+              <span class="md-header-nav__topic">
+                Exposing the Bindings Directly
+              </span>
+            
+          
+        </div>
+      </div>
+      <div class="md-flex__cell md-flex__cell--shrink">
+        
+          
+            <label class="md-icon md-icon--search md-header-nav__button" for="search"></label>
+            
+<div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="search"></label>
+  <div class="md-search__inner">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" required placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="query">
+      <label class="md-icon md-search__icon" for="search"></label>
+      <button type="reset" class="md-icon md-search__icon" data-md-component="reset">&#xE5CD;</button>
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="result">
+          <div class="md-search-result__meta">
+            Type to start searching
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+          
+        
+      </div>
+      
+        <div class="md-flex__cell md-flex__cell--shrink">
+          <div class="md-header-nav__source">
+            
+
+
+  
+
+
+  <a href="https://github.com/sonictk/maya_python_c_extension" title="Go to repository" class="md-source" data-md-source="github">
+    
+      <div class="md-source__icon">
+        <svg viewBox="0 0 24 24" width="24" height="24">
+          <use xlink:href="#github" width="24" height="24"></use>
+        </svg>
+      </div>
+    
+    <div class="md-source__repository">
+      maya_python_c_extension
+    </div>
+  </a>
+
+          </div>
+        </div>
+      
+    </div>
+  </nav>
+</header>
+    
+    <div class="md-container">
+      
+        
+      
+      
+      <main class="md-main">
+        <div class="md-main__inner md-grid" data-md-component="container">
+          
+            
+              <div class="md-sidebar md-sidebar--primary" data-md-component="navigation">
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    <nav class="md-nav md-nav--primary" data-md-level="0">
+  <label class="md-nav__title md-nav__title--site" for="drawer">
+    <span class="md-nav__button md-logo">
+      
+        <i class="md-icon"></i>
+      
+    </span>
+    Writing a Maya Python C++ Extension
+  </label>
+  
+    <div class="md-nav__source">
+      
+
+
+  
+
+
+  <a href="https://github.com/sonictk/maya_python_c_extension" title="Go to repository" class="md-source" data-md-source="github">
+    
+      <div class="md-source__icon">
+        <svg viewBox="0 0 24 24" width="24" height="24">
+          <use xlink:href="#github" width="24" height="24"></use>
+        </svg>
+      </div>
+    
+    <div class="md-source__repository">
+      maya_python_c_extension
+    </div>
+  </a>
+
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href=".." title="About" class="md-nav__link">
+      About
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="../getting_started/" title="Getting Started" class="md-nav__link">
+      Getting Started
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="../writing_the_python_standalone_module/" title="Writing the Module" class="md-nav__link">
+      Writing the Module
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+  
+
+
+  <li class="md-nav__item md-nav__item--active">
+    
+    <input class="md-toggle md-nav__toggle" data-md-toggle="toc" type="checkbox" id="toc">
+    
+      
+    
+    
+      <label class="md-nav__link md-nav__link--active" for="toc">
+        Exposing the Bindings Directly
+      </label>
+    
+    <a href="./" title="Exposing the Bindings Directly" class="md-nav__link md-nav__link--active">
+      Exposing the Bindings Directly
+    </a>
+    
+      
+<nav class="md-nav md-nav--secondary">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="toc">Table of contents</label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#the-new-entry-point" title="The new entry point" class="md-nav__link">
+    The new entry point
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#implementing-selectbyname" title="Implementing selectByName" class="md-nav__link">
+    Implementing selectByName
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#a-possible-problem" title="A possible problem" class="md-nav__link">
+    A possible problem
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#understanding-why-the-segfault-happens" title="Understanding why the segfault happens" class="md-nav__link">
+    Understanding why the segfault happens
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#when-to-use-this-method" title="When to use this method" class="md-nav__link">
+    When to use this method
+  </a>
+  
+</li>
+      
+      
+      
+    </ul>
+  
+</nav>
+    
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="../credits/" title="Credits" class="md-nav__link">
+      Credits
+    </a>
+  </li>
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="toc">
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+<nav class="md-nav md-nav--secondary">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="toc">Table of contents</label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#the-new-entry-point" title="The new entry point" class="md-nav__link">
+    The new entry point
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#implementing-selectbyname" title="Implementing selectByName" class="md-nav__link">
+    Implementing selectByName
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#a-possible-problem" title="A possible problem" class="md-nav__link">
+    A possible problem
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#understanding-why-the-segfault-happens" title="Understanding why the segfault happens" class="md-nav__link">
+    Understanding why the segfault happens
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#when-to-use-this-method" title="When to use this method" class="md-nav__link">
+    When to use this method
+  </a>
+  
+</li>
+      
+      
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content">
+            <article class="md-content__inner md-typeset">
+              
+                
+                
+                <h1 id="exposing-python-bindings-directly-in-a-maya-plugin">Exposing Python bindings directly in a Maya plugin<a class="headerlink" href="#exposing-python-bindings-directly-in-a-maya-plugin" title="Permanent link">&para;</a></h1>
+<p>In the last major chapter, we successfully (hopefully) wrote a basic Maya Python
+C++ extension that utilized Maya functions to print the equivalent of <code>hello world</code>
+to <code>stdout</code>. We also saw how to parse basic arguments and pass that to our C function.</p>
+<p>Now, we're going to try and implement a simple binding that's been missing from
+OM2 for a while: <code>MGlobal::selectByName</code>.</p>
+<p>From the documentation:</p>
+<div class="codehilite"><pre><span></span><span class="n">MStatus</span> <span class="n">selectByName</span><span class="p">(</span><span class="k">const</span> <span class="n">MString</span> <span class="o">&amp;</span><span class="n">name</span><span class="p">,</span> <span class="n">MGlobal</span><span class="o">::</span><span class="n">ListAdjustment</span> <span class="n">listAdjustment</span> <span class="o">=</span> <span class="n">kAddToList</span><span class="p">)</span>
+</pre></div>
+
+
+<blockquote>
+<p>Puts objects that match the give name on the active selection list.</p>
+</blockquote>
+<p>In the interest of keeping things manageable, we're not going to implement the
+regex functionality that the original binding has (You can certainly do that
+yourself if you so wish), nor are we going to implement the other forms that
+this call can take based on passing a different argument to
+<code>listAdjustment</code>. (Also, simple convenience functions that are atomic in
+nature anyway are far easier to debug, not to mention faster due to the lack of
+branching going on.)</p>
+<p>Additionally, this time, we're going to implement things slightly differently;
+instead of needing to compile a <code>.pyd</code> file, we're going to expose the
+bindings to the end-user directly when the <code>.mll</code> plugin is loaded. No messing
+with the <code>PYTHONPATH</code>!</p>
+<h2 id="the-new-entry-point">The new entry point<a class="headerlink" href="#the-new-entry-point" title="Permanent link">&para;</a></h2>
+<p>To do this, we'll need to change the plugin so that it actually <em>is</em> more like a
+conventional Maya plugin. Again, I go over how this machinery works in my
+<a href="https://sonictk.github.io/maya_hot_reload_example_public/getting_started/#what-are-we-even-doing">previous tutorial</a>
+in great detail.</p>
+<div class="codehilite"><pre><span></span><span class="cp">#include</span> <span class="cpf">&quot;maya_python_c_ext_plugin_main.h&quot;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&lt;maya/MFnPlugin.h&gt;</span><span class="cp"></span>
+
+<span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">kAUTHOR</span> <span class="o">=</span> <span class="s">&quot;Siew Yi Liang&quot;</span><span class="p">;</span>
+<span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">kVERSION</span> <span class="o">=</span> <span class="s">&quot;1.0.0&quot;</span><span class="p">;</span>
+<span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">kREQUIRED_API_VERSION</span> <span class="o">=</span> <span class="s">&quot;Any&quot;</span><span class="p">;</span>
+
+<span class="n">PyObject</span> <span class="o">*</span><span class="n">module</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
+
+
+<span class="n">MStatus</span> <span class="nf">initializePlugin</span><span class="p">(</span><span class="n">MObject</span> <span class="n">obj</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">MFnPlugin</span> <span class="n">plugin</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">kAUTHOR</span><span class="p">,</span> <span class="n">kVERSION</span><span class="p">,</span> <span class="n">kREQUIRED_API_VERSION</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">Py_IsInitialized</span><span class="p">())</span> <span class="p">{</span>
+        <span class="n">Py_Initialize</span><span class="p">();</span>
+    <span class="p">}</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">Py_IsInitialized</span><span class="p">())</span> <span class="p">{</span>
+        <span class="n">PyGILState_STATE</span> <span class="n">pyGILState</span> <span class="o">=</span> <span class="n">PyGILState_Ensure</span><span class="p">();</span>
+
+        <span class="n">module</span> <span class="o">=</span> <span class="n">Py_InitModule3</span><span class="p">(</span><span class="s">&quot;maya_python_c_ext&quot;</span><span class="p">,</span>
+                                          <span class="n">mayaPythonCExtMethods</span><span class="p">,</span>
+                                          <span class="n">MAYA_PYTHON_C_EXT_DOCSTRING</span><span class="p">);</span>
+
+        <span class="n">MGlobal</span><span class="o">::</span><span class="n">displayInfo</span><span class="p">(</span><span class="s">&quot;Registered Python bindings!&quot;</span><span class="p">);</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="n">module</span> <span class="o">==</span> <span class="nb">NULL</span><span class="p">)</span> <span class="p">{</span>
+            <span class="k">return</span> <span class="n">MStatus</span><span class="o">::</span><span class="n">kFailure</span><span class="p">;</span>
+        <span class="p">}</span>
+        <span class="n">Py_INCREF</span><span class="p">(</span><span class="n">module</span><span class="p">);</span>
+
+        <span class="n">PyGILState_Release</span><span class="p">(</span><span class="n">pyGILState</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="k">return</span> <span class="n">MStatus</span><span class="o">::</span><span class="n">kSuccess</span><span class="p">;</span>
+<span class="p">}</span>
+
+
+<span class="n">MStatus</span> <span class="nf">uninitializePlugin</span><span class="p">(</span><span class="n">MObject</span> <span class="n">obj</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">MStatus</span> <span class="n">status</span><span class="p">;</span>
+
+    <span class="n">Py_DECREF</span><span class="p">(</span><span class="n">module</span><span class="p">);</span>
+
+    <span class="k">return</span> <span class="n">status</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>Looks fairly similar to the code earlier, doesn't it? There are some slight
+differences, so let's go over them:</p>
+<div class="codehilite"><pre><span></span>    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">Py_IsInitialized</span><span class="p">())</span> <span class="p">{</span>
+        <span class="n">Py_Initialize</span><span class="p">();</span>
+    <span class="p">}</span>
+</pre></div>
+
+
+<p>Here, we check if the Python interpreter has been initialized yet, and if not,
+we initialize it. This really shouldn't happen in practice, but it doesn't hurt
+to be safe.</p>
+<p>The next state of affairs to take care of is the aforementioned GIL:</p>
+<div class="codehilite"><pre><span></span>        <span class="n">Py_INCREF</span><span class="p">(</span><span class="n">module</span><span class="p">);</span>
+</pre></div>
+
+
+<p>Remember how I talked about reference counting previously? We increment the
+count here after we verify that the module has indeed been initialized
+appropriately.</p>
+<p>We also implement the symmetric version of this in <code>uninitializePlugin</code>:</p>
+<div class="codehilite"><pre><span></span>    <span class="n">Py_DECREF</span><span class="p">(</span><span class="n">module</span><span class="p">);</span>
+</pre></div>
+
+
+<p>At first glance, this seems fine; we're incrementing the reference count to the
+module in the plugin's entry point, and decrementing it in the exit point. By
+conventional wisdom, this should mean that our module will get cleaned up by the
+reference collector in Python when the Maya plugin is unloaded, thus saving on
+memory usage and making everyone happy. For now, we'll assume that this works...</p>
+<blockquote>
+<p><strong>Foreshadowing</strong></p>
+<p>Foreshadowing is a literary device in which a writer gives an advance hint of
+what is to come later in the story. Foreshadowing often appears at the
+beginning of a story, or a chapter, and it helps the reader develop
+expectations about the upcoming events.</p>
+</blockquote>
+<p>(If you want to skip ahead to what I'm referring to, please
+read <a href="../exposing_the_bindings_in_maya_plugin#a-possible-problem">A possible problem</a>.)</p>
+<h2 id="implementing-selectbyname">Implementing <code>selectByName</code><a class="headerlink" href="#implementing-selectbyname" title="Permanent link">&para;</a></h2>
+<p>Assuming that everything is going according to plan, let's go ahead and create
+that missing OM2 binding we were talking about:</p>
+<div class="codehilite"><pre><span></span><span class="k">enum</span> <span class="n">MayaPythonCExtStatus</span>
+<span class="p">{</span>
+    <span class="n">UNKNOWN_FAILURE</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
+    <span class="n">NODE_DOES_NOT_EXIST</span> <span class="o">=</span> <span class="o">-</span><span class="mi">2</span><span class="p">,</span>
+    <span class="n">UNABLE_TO_GET_ACTIVE_SELECTION</span> <span class="o">=</span> <span class="o">-</span><span class="mi">3</span><span class="p">,</span>
+    <span class="n">UNABLE_TO_SET_ACTIVE_SELECTION</span> <span class="o">=</span> <span class="o">-</span><span class="mi">4</span><span class="p">,</span>
+    <span class="n">UNABLE_TO_MERGE_SELECTION_LISTS</span> <span class="o">=</span> <span class="o">-</span><span class="mi">5</span><span class="p">,</span>
+    <span class="n">SUCCESS</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="p">};</span>
+
+
+<span class="n">MayaPythonCExtStatus</span> <span class="nf">addToActiveSelectionList</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">name</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">MStatus</span> <span class="n">stat</span><span class="p">;</span>
+
+    <span class="n">MSelectionList</span> <span class="n">objList</span><span class="p">;</span>
+    <span class="n">stat</span> <span class="o">=</span> <span class="n">objList</span><span class="p">.</span><span class="n">add</span><span class="p">(</span><span class="n">name</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">stat</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="n">MayaPythonCExtStatus</span><span class="o">::</span><span class="n">NODE_DOES_NOT_EXIST</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="n">MSelectionList</span> <span class="n">activeSelList</span><span class="p">;</span>
+    <span class="n">stat</span> <span class="o">=</span> <span class="n">MGlobal</span><span class="o">::</span><span class="n">getActiveSelectionList</span><span class="p">(</span><span class="n">activeSelList</span><span class="p">,</span> <span class="nb">true</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">stat</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="n">MayaPythonCExtStatus</span><span class="o">::</span><span class="n">UNABLE_TO_GET_ACTIVE_SELECTION</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="n">stat</span> <span class="o">=</span> <span class="n">activeSelList</span><span class="p">.</span><span class="n">merge</span><span class="p">(</span><span class="n">objList</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">stat</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="n">MayaPythonCExtStatus</span><span class="o">::</span><span class="n">UNABLE_TO_MERGE_SELECTION_LISTS</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="n">stat</span> <span class="o">=</span> <span class="n">MGlobal</span><span class="o">::</span><span class="n">setActiveSelectionList</span><span class="p">(</span><span class="n">activeSelList</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">stat</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="n">MayaPythonCExtStatus</span><span class="o">::</span><span class="n">UNABLE_TO_SET_ACTIVE_SELECTION</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">return</span> <span class="n">MayaPythonCExtStatus</span><span class="o">::</span><span class="n">SUCCESS</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>Again, this should be pretty simple to figure out what's going on. We check if
+the object exists, and if it does, we add it to the actively-selected
+items. But, for all intents and purposes, this is why you would use
+<code>selectByName</code> anyway, so it will fulfill our requirements for this particular 
+example.</p>
+<p>Let's go ahead and implement the Python binding for this:</p>
+<div class="codehilite"><pre><span></span><span class="k">static</span> <span class="n">PyObject</span> <span class="o">*</span><span class="nf">pyAddToActiveSelectionList</span><span class="p">(</span><span class="n">PyObject</span> <span class="o">*</span><span class="n">self</span><span class="p">,</span> <span class="n">PyObject</span> <span class="o">*</span><span class="n">args</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">nodeName</span><span class="p">;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">PyArg_ParseTuple</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="s">&quot;s&quot;</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">nodeName</span><span class="p">))</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="nb">NULL</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="n">PyGILState_STATE</span> <span class="n">pyGILState</span> <span class="o">=</span> <span class="n">PyGILState_Ensure</span><span class="p">();</span>
+
+    <span class="n">MayaPythonCExtStatus</span> <span class="n">stat</span> <span class="o">=</span> <span class="n">addToActiveSelectionList</span><span class="p">(</span><span class="n">nodeName</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">stat</span> <span class="o">!=</span> <span class="n">MayaPythonCExtStatus</span><span class="o">::</span><span class="n">SUCCESS</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">MGlobal</span><span class="o">::</span><span class="n">displayError</span><span class="p">(</span><span class="s">&quot;An error occurred!&quot;</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="n">PyObject</span> <span class="o">*</span><span class="n">result</span> <span class="o">=</span> <span class="n">Py_BuildValue</span><span class="p">(</span><span class="s">&quot;h&quot;</span><span class="p">,</span> <span class="n">stat</span><span class="p">);</span>
+
+    <span class="n">PyGILState_Release</span><span class="p">(</span><span class="n">pyGILState</span><span class="p">);</span>
+
+    <span class="k">return</span> <span class="n">result</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>As before, we see that the signature of the function follows that of a
+<code>PyCFunction</code> type, where two pointers to <code>PyObject</code>s are passed into the 
+function. Again, we parse the first argument using <code>PyArg_ParseTuple</code> in order 
+to extract the string that the caller passed into the Python function using the
+<code>s</code> format specifier. , we then ensure that the GIL is accquired once more
+before executing our code, call our C++ function, and then return the status
+code (since it's an enum, we return a <code>short</code> using the <code>h</code> format
+specifier), while remembering to release the GIL when we're done with it.</p>
+<h2 id="a-possible-problem">A possible problem<a class="headerlink" href="#a-possible-problem" title="Permanent link">&para;</a></h2>
+<p>Now, try this:</p>
+<div class="codehilite"><pre><span></span><span class="kn">import</span> <span class="nn">maya.cmds</span> <span class="kn">as</span> <span class="nn">cmds</span>
+
+<span class="n">cmds</span><span class="o">.</span><span class="n">loadPlugin</span><span class="p">(</span><span class="s2">&quot;maya_python_c_ext&quot;</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">maya_python_c_ext</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="n">hello_world_maya</span><span class="p">(</span><span class="s2">&quot;this works&quot;</span><span class="p">)</span>
+
+<span class="n">cmds</span><span class="o">.</span><span class="n">unloadPlugin</span><span class="p">(</span><span class="s2">&quot;maya_python_c_ext&quot;</span><span class="p">)</span>
+<span class="n">cmds</span><span class="o">.</span><span class="n">loadPlugin</span><span class="p">(</span><span class="s2">&quot;maya_python_c_ext&quot;</span><span class="p">)</span>
+
+<span class="n">hello_world_maya</span><span class="p">(</span><span class="s2">&quot;hmm, I wonder what happens now...?&quot;</span><span class="p">)</span>
+</pre></div>
+
+
+<p>I'll wait.</p>
+<p>...</p>
+<p>Back yet? What did you see? Was it something similar to:</p>
+<div class="codehilite"><pre><span></span>Stack trace:
+  python27.dll!PyEval_GetFuncDesc
+  python27.dll!PyEval_EvalFrameEx
+  python27.dll!PyEval_EvalCodeEx
+  python27.dll!PyRun_FileExFlags
+  python27.dll!PyRun_InteractiveOneFlags
+  python27.dll!PyRun_InteractiveLoopFlags
+  python27.dll!PyRun_AnyFileExFlags
+  python27.dll!Py_Main
+  KERNEL32.DLL!BaseThreadInitThunk
+  ntdll.dll!RtlUserThreadStart
+
+Result: untitled
+Fatal Error. Attempting to save in C:/Users/sonictk/AppData/Local/Temp/sonictk.20180801.0110.ma
+</pre></div>
+
+
+<p>...in case you skipped right here without trying it yourself (tsk, tsk), you
+probably noticed what happened; you segfaulted the Python interpreter. Why is
+this? Shouldn't the Python garbage collector have done its job and cleaned up
+after us? Why are we still triggering a segmentation fault?</p>
+<p>It turns out that, as usual, everything has to do with memory sooner or later,
+and this is one area that a memory-managed language such as Python is severely
+deficient in.</p>
+<h3 id="understanding-why-the-segfault-happens">Understanding why the segfault happens<a class="headerlink" href="#understanding-why-the-segfault-happens" title="Permanent link">&para;</a></h3>
+<p>If you look closely at the script, you can see that we essentially perform the
+following operations:</p>
+<ol>
+<li>
+<p>Load the DLL for our Maya plugin, which also initializes the Python bindings
+   to the embedded Python interpreter inside of Maya.</p>
+</li>
+<li>
+<p>We import the module that contains our bindings, and all its members into the
+   global namespace for the Python interpreter.</p>
+</li>
+<li>
+<p>If we recall, Python caches the modules that get loaded into memory. This is
+   done so that subsequent <code>import</code> statements for the same module can just
+   re-use the already-loaded module object instead of re-importing it
+   again. Normally, this would be fine in a standard Python interpreter, where
+   <code>.pyd</code> files aren't expected to be unloaded at run-time once they've
+   already been loaded by the Python interpreter.</p>
+</li>
+<li>
+<p>However, when we call <code>cmds.unloadPlugin</code> to unload the <code>.mll</code> file at
+   run-time later, we have basically invalidated all memory to that module that
+   was loaded previously. <em>Even though the Python interpreter is still holding a
+   reference to it!</em></p>
+</li>
+<li>
+<p>Thus, when we call <code>hello_world_maya</code> the second time, we trigger
+   a <a href="https://en.wikipedia.org/wiki/Segmentation_fault">segmentation fault</a>
+   since the function call basically is executing a jump instruction to a region
+   of memory that was already deallocated by the OS and is no longer valid for
+   use by the application.</p>
+</li>
+</ol>
+<p>What can we do to avoid this?</p>
+<p>Unfortunately, not much that's non-intrusive; here's one solution:</p>
+<div class="codehilite"><pre><span></span><span class="kn">import</span> <span class="nn">maya.cmds</span> <span class="kn">as</span> <span class="nn">cmds</span>
+
+<span class="n">ARE_BINDINGS_VALID</span> <span class="o">=</span> <span class="bp">False</span>
+
+
+<span class="k">def</span> <span class="nf">load_maya_plugin_and_validate_bindings</span><span class="p">(</span><span class="n">pluginPath</span><span class="p">):</span>
+    <span class="n">cmds</span><span class="o">.</span><span class="n">loadPlugin</span><span class="p">(</span><span class="n">pluginPath</span><span class="p">)</span>
+    <span class="kn">import</span> <span class="nn">maya_python_c_ext</span>
+
+    <span class="n">ARE_BINDINGS_VALID</span> <span class="o">=</span> <span class="bp">True</span>
+
+    <span class="k">return</span> <span class="n">maya_python_c_ext</span>
+
+
+<span class="k">def</span> <span class="nf">unload_maya_plugin_and_invalidate_bindings</span><span class="p">(</span><span class="n">plugin</span><span class="p">):</span>
+    <span class="n">cmds</span><span class="o">.</span><span class="n">unloadPlugin</span><span class="p">(</span><span class="n">plugin</span><span class="p">)</span>
+
+    <span class="n">ARE_BINDINGS_VALID</span> <span class="o">=</span> <span class="bp">False</span>
+
+
+<span class="k">def</span> <span class="nf">validate_bindings</span><span class="p">():</span>
+    <span class="k">return</span> <span class="n">ARE_BINDINGS_VALID</span>
+</pre></div>
+
+
+<p>As you can see, we write very simple wrappers around loading/unloading our
+plugin. The wrapper functions just set a global variable called
+<code>ARE_BINDINGS_VALID</code> that we use to check if, well, the bindings are valid.</p>
+<p>How would these work in practice? Like so:</p>
+<div class="codehilite"><pre><span></span><span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">maya.standalone</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="n">maya</span><span class="o">.</span><span class="n">standalone</span><span class="o">.</span><span class="n">initialize</span><span class="p">()</span>
+    <span class="kn">import</span> <span class="nn">maya.cmds</span> <span class="kn">as</span> <span class="nn">cmds</span>
+
+    <span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="vm">__file__</span><span class="p">))),</span> <span class="s1">&#39;py&#39;</span><span class="p">))</span>
+
+    <span class="kn">import</span> <span class="nn">validate</span>
+
+    <span class="n">pluginPath</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="vm">__file__</span><span class="p">))),</span> <span class="s1">&#39;msbuild&#39;</span><span class="p">,</span> <span class="s1">&#39;maya_python_c_ext.mll&#39;</span><span class="p">)</span>
+    <span class="k">print</span><span class="p">(</span><span class="s1">&#39;loading plugin from {}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">pluginPath</span><span class="p">))</span>
+
+    <span class="n">mpce</span> <span class="o">=</span> <span class="n">validate</span><span class="o">.</span><span class="n">load_maya_plugin_and_validate_bindings</span><span class="p">(</span><span class="n">pluginPath</span><span class="p">)</span>
+
+    <span class="n">mpce</span><span class="o">.</span><span class="n">hello_world_maya</span><span class="p">(</span><span class="s1">&#39;my string&#39;</span><span class="p">)</span>
+
+    <span class="n">validate</span><span class="o">.</span><span class="n">unload_maya_plugin_and_invalidate_bindings</span><span class="p">(</span><span class="s1">&#39;maya_python_c_ext&#39;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">validate</span><span class="o">.</span><span class="n">validate_bindings</span><span class="p">():</span>
+        <span class="n">mpce</span><span class="o">.</span><span class="n">hello_world_maya</span><span class="p">(</span><span class="s1">&#39;my string&#39;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">print</span><span class="p">(</span><span class="s1">&#39;The bindings are no longer valid!&#39;</span><span class="p">)</span>
+
+    <span class="n">maya</span><span class="o">.</span><span class="n">standalone</span><span class="o">.</span><span class="n">uninitialize</span><span class="p">()</span>
+</pre></div>
+
+
+<p>It's not exactly what I would consider an ideal solution, but there rarely is
+such a thing. Alternatively, you could consider having an intermediate plugin
+handle validating the bindings (although you would then need to guarantee that
+this intermediate plugin itself was loaded at all times as well), but that's a
+level of complicatiion I don't want to get into right now.</p>
+<div class="admonition tip">
+<p class="admonition-title">Python and unloading modules</p>
+<p>To read more about why unloading Python modules has been such a contentious
+issue, you can <a href="https://bugs.python.org/issue9072">look at the discussion thread</a>.</p>
+</div>
+<h2 id="when-to-use-this-method">When to use this method<a class="headerlink" href="#when-to-use-this-method" title="Permanent link">&para;</a></h2>
+<p>So, with the aforementioned snafu, when would you want to make use of this
+alternative technique for exposing the bindings? It depends on the situation,
+but for me personally, I think this is most useful when:</p>
+<ul>
+<li>
+<p>You do not need to guarantee availability of the bindings.</p>
+</li>
+<li>
+<p>The functionality you're trying to expose is inherently tied to the rest of
+  the plugin. (i.e. debugging utilities for custom nodes)</p>
+</li>
+<li>
+<p>You're willing to create extra indirection in order to defend against the
+  aforementioned problem, either by creating an intermediate plugin to act as a
+  "guard" layer that checks for validity of the module loaded before allowing
+  you to access the module, or just having Python wrapper functions that have
+  globals set to indicate the validity of the modules that have been loaded.</p>
+</li>
+</ul>
+<p>Perhaps the use cases might be limited, but I think it's a good tool to keep in
+mind nonetheless.</p>
+                
+                  
+                
+              
+              
+                
+              
+            </article>
+          </div>
+        </div>
+      </main>
+      
+        
+<footer class="md-footer">
+  
+    <div class="md-footer-nav">
+      <nav class="md-footer-nav__inner md-grid">
+        
+          <a href="../writing_the_python_standalone_module/" title="Writing the Module" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+            <div class="md-flex__cell md-flex__cell--shrink">
+              <i class="md-icon md-icon--arrow-back md-footer-nav__button"></i>
+            </div>
+            <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
+              <span class="md-flex__ellipsis">
+                <span class="md-footer-nav__direction">
+                  Previous
+                </span>
+                Writing the Module
+              </span>
+            </div>
+          </a>
+        
+        
+          <a href="../credits/" title="Credits" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
+            <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
+              <span class="md-flex__ellipsis">
+                <span class="md-footer-nav__direction">
+                  Next
+                </span>
+                Credits
+              </span>
+            </div>
+            <div class="md-flex__cell md-flex__cell--shrink">
+              <i class="md-icon md-icon--arrow-forward md-footer-nav__button"></i>
+            </div>
+          </a>
+        
+      </nav>
+    </div>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-footer-copyright">
+        
+        powered by
+        <a href="http://www.mkdocs.org">MkDocs</a>
+        and
+        <a href="https://squidfunk.github.io/mkdocs-material/">
+          Material for MkDocs</a>
+      </div>
+      
+        
+  <div class="md-footer-social">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    
+      <a href="https://github.com/sonictk" class="md-footer-social__link fa fa-github"></a>
+    
+      <a href="https://twitter.com/ylsiew" class="md-footer-social__link fa fa-twitter"></a>
+    
+      <a href="https://linkedin.com/in/sonictk" class="md-footer-social__link fa fa-linkedin"></a>
+    
+  </div>
+
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    
+      <script src="../assets/javascripts/application.6cdc17f0.js"></script>
+      
+      <script>app.initialize({version:"0.17.2",url:{base:".."}})</script>
+      
+    
+    
+      
+    
+  </body>
+</html>

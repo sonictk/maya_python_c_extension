@@ -1,0 +1,814 @@
+
+
+
+
+<!DOCTYPE html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      <meta http-equiv="x-ua-compatible" content="ie=edge">
+      
+        <meta name="description" content="Tutorial on how to expose Python bindings to your Maya C++ code">
+      
+      
+      
+        <meta name="author" content="Siew Yi Liang">
+      
+      
+        <meta name="lang:clipboard.copy" content="Copy to clipboard">
+      
+        <meta name="lang:clipboard.copied" content="Copied to clipboard">
+      
+        <meta name="lang:search.language" content="en">
+      
+        <meta name="lang:search.result.none" content="No matching documents">
+      
+        <meta name="lang:search.result.one" content="1 matching document">
+      
+        <meta name="lang:search.result.other" content="# matching documents">
+      
+        <meta name="lang:search.tokenizer" content="[\s\-]+">
+      
+      <link rel="shortcut icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-0.17.2, mkdocs-material-2.2.2">
+    
+    
+      
+        <title>Getting Started - Writing a Maya Python C++ Extension</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/application.7a4cdee3.css">
+      
+        <link rel="stylesheet" href="../assets/stylesheets/application-palette.792431c1.css">
+      
+    
+    
+      <script src="../assets/javascripts/modernizr.1aa3b519.js"></script>
+    
+    
+      
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700|Roboto+Mono">
+        <style>body,input{font-family:"Roboto","Helvetica Neue",Helvetica,Arial,sans-serif}code,kbd,pre{font-family:"Roboto Mono","Courier New",Courier,monospace}</style>
+      
+      <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    
+    
+    
+  </head>
+  
+    
+    
+    
+      <body data-md-color-primary="blue" data-md-color-accent="deep-orange">
+    
+  
+    <svg class="md-svg">
+      <defs>
+        
+        
+          <svg xmlns="http://www.w3.org/2000/svg" width="416" height="448" viewBox="0 0 416 448" id="github"><path fill="currentColor" d="M160 304q0 10-3.125 20.5t-10.75 19T128 352t-18.125-8.5-10.75-19T96 304t3.125-20.5 10.75-19T128 256t18.125 8.5 10.75 19T160 304zm160 0q0 10-3.125 20.5t-10.75 19T288 352t-18.125-8.5-10.75-19T256 304t3.125-20.5 10.75-19T288 256t18.125 8.5 10.75 19T320 304zm40 0q0-30-17.25-51T296 232q-10.25 0-48.75 5.25Q229.5 240 208 240t-39.25-2.75Q130.75 232 120 232q-29.5 0-46.75 21T56 304q0 22 8 38.375t20.25 25.75 30.5 15 35 7.375 37.25 1.75h42q20.5 0 37.25-1.75t35-7.375 30.5-15 20.25-25.75T360 304zm56-44q0 51.75-15.25 82.75-9.5 19.25-26.375 33.25t-35.25 21.5-42.5 11.875-42.875 5.5T212 416q-19.5 0-35.5-.75t-36.875-3.125-38.125-7.5-34.25-12.875T37 371.5t-21.5-28.75Q0 312 0 260q0-59.25 34-99-6.75-20.5-6.75-42.5 0-29 12.75-54.5 27 0 47.5 9.875t47.25 30.875Q171.5 96 212 96q37 0 70 8 26.25-20.5 46.75-30.25T376 64q12.75 25.5 12.75 54.5 0 21.75-6.75 42 34 40 34 99.5z"/></svg>
+        
+      </defs>
+    </svg>
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="drawer">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="search">
+    <label class="md-overlay" data-md-component="overlay" for="drawer"></label>
+    
+      <header class="md-header" data-md-component="header">
+  <nav class="md-header-nav md-grid">
+    <div class="md-flex">
+      <div class="md-flex__cell md-flex__cell--shrink">
+        <a href=".." title="Writing a Maya Python C++ Extension" class="md-header-nav__button md-logo">
+          
+            <i class="md-icon"></i>
+          
+        </a>
+      </div>
+      <div class="md-flex__cell md-flex__cell--shrink">
+        <label class="md-icon md-icon--menu md-header-nav__button" for="drawer"></label>
+      </div>
+      <div class="md-flex__cell md-flex__cell--stretch">
+        <div class="md-flex__ellipsis md-header-nav__title" data-md-component="title">
+          
+            
+              <span class="md-header-nav__topic">
+                Writing a Maya Python C++ Extension
+              </span>
+              <span class="md-header-nav__topic">
+                Getting Started
+              </span>
+            
+          
+        </div>
+      </div>
+      <div class="md-flex__cell md-flex__cell--shrink">
+        
+          
+            <label class="md-icon md-icon--search md-header-nav__button" for="search"></label>
+            
+<div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="search"></label>
+  <div class="md-search__inner">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" required placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="query">
+      <label class="md-icon md-search__icon" for="search"></label>
+      <button type="reset" class="md-icon md-search__icon" data-md-component="reset">&#xE5CD;</button>
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="result">
+          <div class="md-search-result__meta">
+            Type to start searching
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+          
+        
+      </div>
+      
+        <div class="md-flex__cell md-flex__cell--shrink">
+          <div class="md-header-nav__source">
+            
+
+
+  
+
+
+  <a href="https://github.com/sonictk/maya_python_c_extension" title="Go to repository" class="md-source" data-md-source="github">
+    
+      <div class="md-source__icon">
+        <svg viewBox="0 0 24 24" width="24" height="24">
+          <use xlink:href="#github" width="24" height="24"></use>
+        </svg>
+      </div>
+    
+    <div class="md-source__repository">
+      maya_python_c_extension
+    </div>
+  </a>
+
+          </div>
+        </div>
+      
+    </div>
+  </nav>
+</header>
+    
+    <div class="md-container">
+      
+        
+      
+      
+      <main class="md-main">
+        <div class="md-main__inner md-grid" data-md-component="container">
+          
+            
+              <div class="md-sidebar md-sidebar--primary" data-md-component="navigation">
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    <nav class="md-nav md-nav--primary" data-md-level="0">
+  <label class="md-nav__title md-nav__title--site" for="drawer">
+    <span class="md-nav__button md-logo">
+      
+        <i class="md-icon"></i>
+      
+    </span>
+    Writing a Maya Python C++ Extension
+  </label>
+  
+    <div class="md-nav__source">
+      
+
+
+  
+
+
+  <a href="https://github.com/sonictk/maya_python_c_extension" title="Go to repository" class="md-source" data-md-source="github">
+    
+      <div class="md-source__icon">
+        <svg viewBox="0 0 24 24" width="24" height="24">
+          <use xlink:href="#github" width="24" height="24"></use>
+        </svg>
+      </div>
+    
+    <div class="md-source__repository">
+      maya_python_c_extension
+    </div>
+  </a>
+
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href=".." title="About" class="md-nav__link">
+      About
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+  
+
+
+  <li class="md-nav__item md-nav__item--active">
+    
+    <input class="md-toggle md-nav__toggle" data-md-toggle="toc" type="checkbox" id="toc">
+    
+      
+    
+    
+      <label class="md-nav__link md-nav__link--active" for="toc">
+        Getting Started
+      </label>
+    
+    <a href="./" title="Getting Started" class="md-nav__link md-nav__link--active">
+      Getting Started
+    </a>
+    
+      
+<nav class="md-nav md-nav--secondary">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="toc">Table of contents</label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#what-is-a-python-c-extension-anyway" title="What is a Python C Extension anyway?" class="md-nav__link">
+    What is a Python C Extension anyway?
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#loading-a-python-module" title="Loading a Python module" class="md-nav__link">
+    Loading a Python module
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hello-maya" title=""Hello, Maya"" class="md-nav__link">
+    "Hello, Maya"
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#garbage-collection" title="Garbage collection" class="md-nav__link">
+    Garbage collection
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#parsing-the-input-arguments" title="Parsing the input arguments" class="md-nav__link">
+    Parsing the input arguments
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-global-interpreter-lock-gil" title="The Global Interpreter Lock (GIL)" class="md-nav__link">
+    The Global Interpreter Lock (GIL)
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#returning-pyobject-values" title="Returning PyObject values" class="md-nav__link">
+    Returning PyObject values
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+      
+      
+    </ul>
+  
+</nav>
+    
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="../writing_the_python_standalone_module/" title="Writing the Module" class="md-nav__link">
+      Writing the Module
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="../exposing_the_bindings_in_maya_plugin/" title="Exposing the Bindings Directly" class="md-nav__link">
+      Exposing the Bindings Directly
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="../credits/" title="Credits" class="md-nav__link">
+      Credits
+    </a>
+  </li>
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="toc">
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+<nav class="md-nav md-nav--secondary">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="toc">Table of contents</label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#what-is-a-python-c-extension-anyway" title="What is a Python C Extension anyway?" class="md-nav__link">
+    What is a Python C Extension anyway?
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#loading-a-python-module" title="Loading a Python module" class="md-nav__link">
+    Loading a Python module
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hello-maya" title=""Hello, Maya"" class="md-nav__link">
+    "Hello, Maya"
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#garbage-collection" title="Garbage collection" class="md-nav__link">
+    Garbage collection
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#parsing-the-input-arguments" title="Parsing the input arguments" class="md-nav__link">
+    Parsing the input arguments
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-global-interpreter-lock-gil" title="The Global Interpreter Lock (GIL)" class="md-nav__link">
+    The Global Interpreter Lock (GIL)
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#returning-pyobject-values" title="Returning PyObject values" class="md-nav__link">
+    Returning PyObject values
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+      
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content">
+            <article class="md-content__inner md-typeset">
+              
+                
+                
+                <h1 id="getting-started">Getting started<a class="headerlink" href="#getting-started" title="Permanent link">&para;</a></h1>
+<p>Now that we understand the goals of the project, let's dive a little bit into
+the theory surrounding how a Python C extension works before writing any
+boilerplate. It'll help serve as a basis for guiding what we need to do first.</p>
+<h2 id="what-is-a-python-c-extension-anyway">What is a Python C Extension anyway?<a class="headerlink" href="#what-is-a-python-c-extension-anyway" title="Permanent link">&para;</a></h2>
+<p>If you have some competence with Python, you'll probably have noticed by now
+that sometimes, certain Python modules aren't loaded in the traditional sense of
+having a <code>.py</code>file along with a <code>__init__.py</code> file as well; there's usually
+a single <code>.pyd</code> instead. If you've seen
+my
+<a href="https://sonictk.github.io/maya_hot_reload_example_public/getting_started/#understanding-how-libraries-work">previous tutorial</a>,
+let's expand on this: a <code>.pyd</code> file is essentially a DLL. It's the <em>exact same
+format</em>. However, just like a Maya plugin (<code>.mll</code> on Windows) shares the exact
+same format as a DLL does, a <code>.pyd</code> file follows specific conventions so that
+the Python interpreter knows how to load it:</p>
+<ul>
+<li>
+<p>The entry point for module named <code>foo_bar.pyd</code> will be automatically determined
+  to be <code>initfoo_bar</code>. This is the convention that the Python interpreter uses
+  to search for a symbol so that it can dynamically load the library at run-time
+  when the statement <code>import foo_bar</code> is parsed in the interpreter. We'll talk
+  about this more when we implement our own entry point in a bit.</p>
+</li>
+<li>
+<p>As mentioned above, the <code>.pyd</code> file does not need to be linked with the main
+  program executable (Maya, in this case), since the Python
+  interpreter will be loading it dynamically at run-time. </p>
+</li>
+<li>
+<p>You cannot rely on the standard method of declaring exports from a DLL, either
+  through symbol visiblity or specifying external linkage (i.e. <code>extern
+  "C"</code>). Python-specific exports must be declared through the use of special
+  functions, <code>Py_InitModule</code> and its variants. Again, we'll be talking about
+  this in a bit.</p>
+</li>
+</ul>
+<div class="admonition tip">
+<p class="admonition-title">Crossing the platforms</p>
+<p>On Linux, <code>.pyd</code> files will instead be <code>.so</code> files, and (I believe, but
+I can't be bothered to boot up my Macbook to check) on OSX, these will be
+<code>.dylib</code> files.</p>
+</div>
+<p>The main takeaway here is that <em>python modules are nothing special.</em> They're
+just libraries, loaded at run-time dynamically, that follow specific conventions
+the Python interpreter relies on to be able to function the way it does.</p>
+<p>Ok, so we know that a <code>.pyd</code> is essentially just a DLL. Cool. So how does the
+Python interpreter know where to look for our module when we type <code>import foo_bar</code>?</p>
+<h2 id="loading-a-python-module">Loading a Python module<a class="headerlink" href="#loading-a-python-module" title="Permanent link">&para;</a></h2>
+<div class="admonition tip">
+<p class="admonition-title">Fast-forward</p>
+<p>If you're already innately familiar with how Python searches for modules,
+you can go ahead and skip to the next section. If not, I suggest you read
+this part before continuing.</p>
+</div>
+<p>The search path for all modules globally available to Python happens in a couple
+of areas; one of those is on the path specified by the environment variable
+<code>PYTHONPATH</code>. If <code>foo_bar.pyd</code> is available on that path, typing <code>import
+foo_bar</code> will cause the Python interpreter to attempt to load that <code>.pyd</code>
+file, inspect it for a suitable entry point and initialize it if found. Once it
+does so, you'll be able to access the functions previously defined in its
+<em>function table</em>.</p>
+<p>Bear in mind; if you have another conventional <code>foo_bar.py</code>module also
+available on the <code>PYTHONPATH</code>, ahead of the <code>.pyd</code> version, that module will
+be used instead of the compiled version! It is therefore important to manage the
+paths on your <code>PYTHONPATH</code>, along with the namespaces of your modules.</p>
+<h2 id="hello-maya">"Hello, Maya"<a class="headerlink" href="#hello-maya" title="Permanent link">&para;</a></h2>
+<p>Before we write bindings to anything, we need <em>something</em> to actually bind
+to. Let's start with the timeless <code>hello world</code>.</p>
+<div class="codehilite"><pre><span></span><span class="cp">#include</span> <span class="cpf">&lt;maya/MGlobal.h&gt;</span><span class="cp"></span>
+
+
+<span class="kt">void</span> <span class="nf">helloWorldMaya</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="n">MGlobal</span><span class="o">::</span><span class="n">displayInfo</span><span class="p">(</span><span class="s">&quot;Hello world from the Maya Python C extension!&quot;</span><span class="p">);</span>
+
+    <span class="k">return</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>You should be able to tell what this does at a glance. Simple and
+straightforward. However, instead of writing a bunch of boilerplate and an
+<code>MPxCommand</code> to fire off this function, we're going to skip all of that and  expose
+it directly to Python. Which means we get to write a whole different set
+of boilerplate instead!</p>
+<div class="codehilite"><pre><span></span><span class="cp">#include</span> <span class="cpf">&quot;maya_python_c_ext_py_hello_world.h&quot;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&quot;maya_python_c_ext_hello_world.h&quot;</span><span class="cp"></span>
+
+<span class="cp">#include</span> <span class="cpf">&lt;Python.h&gt;</span><span class="cp"></span>
+
+<span class="cp">#include</span> <span class="cpf">&lt;stdio.h&gt;</span><span class="cp"></span>
+
+
+<span class="k">static</span> <span class="k">const</span> <span class="kt">char</span> <span class="n">HELLO_WORLD_MAYA_DOCSTRING</span><span class="p">[]</span> <span class="o">=</span> <span class="s">&quot;Says hello world!&quot;</span><span class="p">;</span>
+
+<span class="k">static</span> <span class="n">PyObject</span> <span class="o">*</span><span class="nf">pyHelloWorldMaya</span><span class="p">(</span><span class="n">PyObject</span> <span class="o">*</span><span class="n">self</span><span class="p">,</span> <span class="n">PyObject</span> <span class="o">*</span><span class="n">args</span><span class="p">);</span>
+
+<span class="k">static</span> <span class="n">PyObject</span> <span class="o">*</span><span class="nf">pyHelloWorldMaya</span><span class="p">(</span><span class="n">PyObject</span> <span class="o">*</span><span class="n">self</span><span class="p">,</span> <span class="n">PyObject</span> <span class="o">*</span><span class="n">args</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">inputString</span><span class="p">;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">PyArg_ParseTuple</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="s">&quot;s&quot;</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">inputString</span><span class="p">))</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="nb">NULL</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="n">PyGILState_STATE</span> <span class="n">pyGILState</span> <span class="o">=</span> <span class="n">PyGILState_Ensure</span><span class="p">();</span>
+
+    <span class="n">helloWorldMaya</span><span class="p">();</span>
+
+    <span class="n">PyObject</span> <span class="o">*</span><span class="n">result</span> <span class="o">=</span> <span class="n">Py_BuildValue</span><span class="p">(</span><span class="s">&quot;s&quot;</span><span class="p">,</span> <span class="n">inputString</span><span class="p">);</span>
+
+    <span class="n">PyGILState_Release</span><span class="p">(</span><span class="n">pyGILState</span><span class="p">);</span>
+
+    <span class="k">return</span> <span class="n">result</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>Ok, I typed a bunch of stuff up there that seems awfully scary. Let's break this
+down line-by-line:</p>
+<div class="codehilite"><pre><span></span><span class="cp">#include</span> <span class="cpf">&lt;Python.h&gt;</span><span class="cp"></span>
+
+<span class="k">static</span> <span class="k">const</span> <span class="kt">char</span> <span class="n">HELLO_WORLD_MAYA_DOCSTRING</span><span class="p">[]</span> <span class="o">=</span> <span class="s">&quot;Says hello world!&quot;</span><span class="p">;</span>
+</pre></div>
+
+
+<p>This is fairly straightforward; I'm writing a Python C extension and I'm going
+to be using functionality from the Python libraries. I need the header.</p>
+<p>I also define a docstring that I would like my function to have. I know, <em>fancy</em>.</p>
+<div class="codehilite"><pre><span></span>static PyObject *pyHelloWorldMaya(PyObject *self, PyObject *args);
+</pre></div>
+
+
+<p>What is a <code>PyObject</code>? If you look in the Python source code, you might lose
+your sanity, so I'll summarize here: it's basically a typedef'ed type that
+Python uses to store information about a pointer to an object, so that it can
+treat the <code>PyObject</code> <em>itself as an object</em>. Yes, this is Inception-mode.</p>
+<p>The reason for this is that in a release build, the <code>PyObject</code> only contains
+the reference count for the object (which is used for determining when the
+Python garbage collector is free to release the memory allocated to the object),
+along with a pointer to the corresponding <em>type object</em>.</p>
+<h3 id="garbage-collection">Garbage collection<a class="headerlink" href="#garbage-collection" title="Permanent link">&para;</a></h3>
+<p>Python has an in-built garbage collector, which is another way of saying
+that it attempts to manage the memory for you for the objects that you
+use. There's actually two separate collectors, one being the <strong>reference
+counting</strong> collector and the other <strong>generational</strong> collector, available in
+the <code>gc</code> module, but we'll focus on the reference-counting one for
+now.</p>
+<p>How it works is that every object owned by Python (which is really just
+a reference to an <em>actual</em> object with the <em>actual</em> data) has a simple counter
+that tracks how many times a pointer to the object is copied or deleted and
+is incremented/decremented as necessary. Once the counter reaches <code>0</code>, the
+object is free to be deallocated by the collector. It's a fairly simple
+mechanism; however, we need to make sure that we are aware of how it works
+since if we forget to manage the memory correctly, we could end up having a
+memory leak in our bindings or worse, a crash.</p>
+<p>More information on this is available <a href="https://docs.python.org/3.6/c-api/intro.html#objects-types-and-reference-counts">here</a>.</p>
+<div class="admonition tip">
+<p class="admonition-title">The <code>gc</code> module in Python</p>
+<p>Some of you might already be aware that Python comes with a <code>gc</code> module,
+which provides an interface to the <em>generational garbage collector</em>. While the
+concept of two garbage collectors working together in unison sounds like a
+receipe for disaster (and sometimes it is!), there's a method behind the
+madness: the reference counting collector, due to being straightforward, is
+also fast, but thus comes at a price: it cannot detect <em>reference cycles</em>.</p>
+<p>That is to say, if you have one or more objects referencing each other, in
+terms of <em>graph theory</em>, you have a <em>cyclic dependency</em>. A simple example in
+code would be something like:</p>
+<p><code>a.attribute1 = b;
+b.other_attribute = a</code></p>
+<p>In such a case, the RC garbage collector would not reclaim the memory for
+either <code>a</code> or <code>b</code>, even if they referred to nothing else. That's where
+the second garbage collector steps in.</p>
+</div>
+<p>So what's the rest of the code doing, then?</p>
+<h3 id="parsing-the-input-arguments">Parsing the input arguments<a class="headerlink" href="#parsing-the-input-arguments" title="Permanent link">&para;</a></h3>
+<div class="codehilite"><pre><span></span><span class="k">static</span> <span class="n">PyObject</span> <span class="o">*</span><span class="nf">pyHelloWorldMaya</span><span class="p">(</span><span class="n">PyObject</span> <span class="o">*</span><span class="n">self</span><span class="p">,</span> <span class="n">PyObject</span> <span class="o">*</span><span class="n">args</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">inputString</span><span class="p">;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">PyArg_ParseTuple</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="s">&quot;s&quot;</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">inputString</span><span class="p">))</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="nb">NULL</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="n">PyGILState_STATE</span> <span class="n">pyGILState</span> <span class="o">=</span> <span class="n">PyGILState_Ensure</span><span class="p">();</span>
+
+    <span class="n">helloWorldMaya</span><span class="p">();</span>
+    <span class="n">MGlobal</span><span class="o">::</span><span class="n">displayInfo</span><span class="p">(</span><span class="n">inputString</span><span class="p">);</span>
+
+    <span class="n">PyObject</span> <span class="o">*</span><span class="n">result</span> <span class="o">=</span> <span class="n">Py_BuildValue</span><span class="p">(</span><span class="s">&quot;s&quot;</span><span class="p">,</span> <span class="n">inputString</span><span class="p">);</span>
+
+    <span class="n">PyGILState_Release</span><span class="p">(</span><span class="n">pyGILState</span><span class="p">);</span>
+
+    <span class="k">return</span> <span class="n">result</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>The signature of the function is something that Python expects from a
+<code>PyCFunction</code> type. This is just something you'll have to accept as convention
+for now; we'll see why this is enforced later when we register this function in
+the <em>function table</em>. Basically our function must return a pointer to a
+<code>PyObject</code>, and take two pointers to <code>PyObject</code>s as well.</p>
+<div class="admonition tip">
+<p class="admonition-title">The <code>PyCFunction</code> signature</p>
+<p>What is this <code>PyCFunction</code> malarkey anyway? Well, if we look at the <a href="https://docs.python.org/2/c-api/structures.html#c.PyCFunction">official 
+documentation</a>, 
+we see that it is basically the common type of function signature used for
+(almost) all the Python callable functions; the first two <code>PyObject</code>
+pointer arguments have different semantics depending on what kind of flags
+are passed into the <em>function table</em> when the function is registered. For
+the case above, since we used <code>METH_VARARGS</code> as the flag describing how
+our function call should be constructed, the first pointer refers to the
+module object, and the second pointer refers to a tuple <code>PyObject</code>
+representing all the arguments that were passed into the function from Python.</p>
+</div>
+<p>The first few lines make use of <code>PyArg_ParseTuple</code> to basically parse the
+arguments given to the Python function. For example, if I called the function
+<code>foo_bar('oh noes')</code>, <code>PyArg_ParseTuple</code> would, with the given arguments
+specified, interpret the first argument as a string, and store that in the
+<code>inputString</code> pointer. If you look at
+the <a href="https://docs.python.org/2/c-api/arg.html">documentation</a>
+for it, you'll realize that the format specifiers are similar to that of
+<code>printf</code> in the standard library, but <strong>be warned:</strong> there are subtle
+differences.</p>
+<p>The next call we make is something you might not find in other "HOW TO WRITE
+YOUR OWN PYTHON C EXTENSION" tutorials, and that's because it's Maya-specific.</p>
+<h3 id="the-global-interpreter-lock-gil">The Global Interpreter Lock (GIL)<a class="headerlink" href="#the-global-interpreter-lock-gil" title="Permanent link">&para;</a></h3>
+<p>This is a topic that comes up a lot, even for experienced TDs/programmers, so I
+thought I'd take my stab at explaining what is really at its core a fairly
+fundamental concept, if a bit complex.</p>
+<p>The way I like to think about the GIL in Python is the following statement:</p>
+<blockquote>
+<p>The Global Interpreter Lock in Python is a mutex.</p>
+</blockquote>
+<p>That's it.</p>
+<div class="admonition tip">
+<p class="admonition-title">Mutex?</p>
+<p>For those of us who aren't familiar with what a mutex is, it's shorthand
+for <strong>mutual exclusion object</strong>. It is basically a mechanism (more often
+than not implemented as a simple object with a unique ID) that allows a
+single thread within a running process to say, "Hey, I need to access this
+memory". The program then requests (either by itself or from the OS, even) a
+handle that can act as this program object. Once it is accquired by the
+thread, no other threads are allowed to access that memory (also known in
+parlance as a <strong>critical section</strong>), until the mutex program object is
+<strong>released</strong> by the first thread owner.</p>
+</div>
+<p>Ok, so the <em>actual</em> implementation of the GIL goes a little beyond a simple
+mutex, but it essentially boils down to: the sole purpose of the GIL is to
+ensure that Python objects (and the memory they point to) are protected from
+multi-threaded access, making sure that Python bytecode can only be executed
+from a single thread at a single time. This is required in the CPython
+implementation (which is what Maya's Python, and likely your system's Python
+installation as well is using) since the memory management implementation in
+CPython <strong>is not thread-safe</strong>.</p>
+<p>In order to ensure that we follow the conventions required by CPython
+extensions, we must <strong>accquire the GIL</strong> before executing Python code
+ourselves. This is <em>even more important</em> in Maya, because in Maya, <strong>the main
+thread is not a Python thread</strong>. (In case that wasn't already obvious, otherwise
+things would be much, much slower.)</p>
+<p>What we'll be doing is registering the GIL towards the main thread so that the
+Python interpreter can "see" it and execute our code. While normally in a Python
+C extension you probably wouldn't care about this, or would use
+<code>PyEval_SaveThread</code> and <code>PyEval_RestoreThread</code> instead, we make use of
+<code>PyGILState_Ensure</code> and <code>PyGILState_Release</code> to accquire and release the
+lock. Thus, we see these two calls surrounding the beginning and end of the
+relevant critical section that calls Python code.</p>
+<h3 id="returning-pyobject-values">Returning <code>PyObject</code> values<a class="headerlink" href="#returning-pyobject-values" title="Permanent link">&para;</a></h3>
+<p>We see that the next unfamiliar statement is the line:</p>
+<div class="codehilite"><pre><span></span>    <span class="n">PyObject</span> <span class="o">*</span><span class="n">result</span> <span class="o">=</span> <span class="n">Py_BuildValue</span><span class="p">(</span><span class="s">&quot;s&quot;</span><span class="p">,</span> <span class="n">inputString</span><span class="p">);</span>
+</pre></div>
+
+
+<p>It's fairly straightfoward; this just uses the same format specifiers that
+<code>PyArg_ParseTuple</code> did to build a <code>PyObject</code> from the given C type. In this
+case, we're building a Python string from our C string and returning that. Keep
+in mind that unlike in Python, we can only return one value from C functions, so
+keeping the exact same connotations that you may have in your Python API might
+be difficult if you don't follow this convention.</p>
+<p>So, not that complicated, right? We'll begin writing the entry point in the next
+chapter, and then try to get a working <code>.pyd</code> file compiled right after.</p>
+                
+                  
+                
+              
+              
+                
+              
+            </article>
+          </div>
+        </div>
+      </main>
+      
+        
+<footer class="md-footer">
+  
+    <div class="md-footer-nav">
+      <nav class="md-footer-nav__inner md-grid">
+        
+          <a href=".." title="About" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+            <div class="md-flex__cell md-flex__cell--shrink">
+              <i class="md-icon md-icon--arrow-back md-footer-nav__button"></i>
+            </div>
+            <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
+              <span class="md-flex__ellipsis">
+                <span class="md-footer-nav__direction">
+                  Previous
+                </span>
+                About
+              </span>
+            </div>
+          </a>
+        
+        
+          <a href="../writing_the_python_standalone_module/" title="Writing the Module" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
+            <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
+              <span class="md-flex__ellipsis">
+                <span class="md-footer-nav__direction">
+                  Next
+                </span>
+                Writing the Module
+              </span>
+            </div>
+            <div class="md-flex__cell md-flex__cell--shrink">
+              <i class="md-icon md-icon--arrow-forward md-footer-nav__button"></i>
+            </div>
+          </a>
+        
+      </nav>
+    </div>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-footer-copyright">
+        
+        powered by
+        <a href="http://www.mkdocs.org">MkDocs</a>
+        and
+        <a href="https://squidfunk.github.io/mkdocs-material/">
+          Material for MkDocs</a>
+      </div>
+      
+        
+  <div class="md-footer-social">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    
+      <a href="https://github.com/sonictk" class="md-footer-social__link fa fa-github"></a>
+    
+      <a href="https://twitter.com/ylsiew" class="md-footer-social__link fa fa-twitter"></a>
+    
+      <a href="https://linkedin.com/in/sonictk" class="md-footer-social__link fa fa-linkedin"></a>
+    
+  </div>
+
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    
+      <script src="../assets/javascripts/application.6cdc17f0.js"></script>
+      
+      <script>app.initialize({version:"0.17.2",url:{base:".."}})</script>
+      
+    
+    
+      
+    
+  </body>
+</html>
