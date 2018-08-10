@@ -3,7 +3,7 @@
 ## The entry point ##
 
 The entry point, as mentioned previously, must have a specific function
-singature based off the desired module name.
+signature based off the desired module name.
 
 ```c++
 static char MAYA_PYTHON_C_EXT_DOCSTRING[] = "An example Python C extension that makes use of Maya functionality.";
@@ -63,10 +63,9 @@ anything like that. We will write a ``build.bat``. The ``build.bat`` will build
 the code, no other nonsense involved. (And trust me, if you go down the
 ``distutils`` route, there is a _whole lot_ of involvement.)
 
-The ``build.bat`` script is provided in
-the
-[code for this repository](https://bitbucket.org/sonictk/maya_python_c_extension). Most
-of it is fairly straightforward if you understand batch file syntax on Windows,
+The ``build.bat`` script is provided in the
+[code for this repository](https://bitbucket.org/sonictk/maya_python_c_extension). 
+Most of it is fairly straightforward if you understand batch file syntax on Windows,
 so I'll only focus on the parts that concern this project.
 
 !!! tip "Crossing the platforms"
@@ -122,6 +121,18 @@ edit the ``MayaRootDir`` variable to point to the root of your Maya
 installation. You should also make sure that the ``include`` folder from your
 Maya devkit is placed in there as well, or else edit the
 ``MayaIncludeDir``variable to point to it as needed.
+
+!!! tip "So what's wrong with ``distutils``?"
+    Other than the fact that's it's yet another unnecessary abstraction and
+    would require me to run a seperate ``python setup.py build`` step outside of
+    the normal build script, it also attempts to call the wrong Visual Studio
+    compiler by default, since it's concerned with what the official Python
+    distribution was built against. Unfortunately, we're working with a custom
+    build of Python in the case of Maya's Python interpreter, which basically
+    makes the entire ``distutils`` build system an annoying nuinsance to work
+    around. Besides, we have more control over what the compiler/linker are
+    actually doing this way, without worrying about overriding any flags being
+    set by default or other such distractions.
 
 
 ## Running it in ``mayapy`` ##

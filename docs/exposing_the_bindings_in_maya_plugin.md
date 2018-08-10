@@ -17,7 +17,11 @@ MStatus selectByName(const MString &name, MGlobal::ListAdjustment listAdjustment
 
 In the interest of keeping things manageable, we're not going to implement the
 regex functionality that the original binding has (You can certainly do that
-yourself if you so wish).
+yourself if you so wish), nor are we going to implement the other forms that
+this call can take based on passing a different argument to
+``listAdjustment``. (Also, simple convenience functions that are atomic in
+nature anyway are far easier to debug, not to mention faster due to the lack of
+branching going on.)
 
 Additionally, this time, we're going to implement things slightly differently;
 instead of needing to compile a ``.pyd`` file, we're going to expose the
@@ -115,7 +119,108 @@ At first glance, this seems fine; we're incrementing the reference count to the
 module in the plugin's entry point, and decrementing it in the exit point. By
 conventional wisdom, this should mean that our module will get cleaned up by the
 reference collector in Python when the Maya plugin is unloaded, thus saving on
-memory usage and making everyone happy.
+memory usage and making everyone happy. For now, we'll assume that this works...
+
+> **Foreshadowing**
+>
+> Foreshadowing is a literary device in which a writer gives an advance hint of
+> what is to come later in the story. Foreshadowing often appears at the
+> beginning of a story, or a chapter, and it helps the reader develop
+> expectations about the upcoming events.
+
+(If you want to skip ahead to what I'm referring to, please
+read [A possible problem](exposing_the_bindings_in_maya_plugin#a-possible-problem).)
+
+
+## Implementing ``selectByName`` ##
+
+Assuming that everything is going according to plan, let's go ahead and create
+that missing OM2 binding we were talking about:
+
+```c++
+enum MayaPythonCExtStatus
+{
+    UNKNOWN_FAILURE = -1,
+    NODE_DOES_NOT_EXIST = -2,
+    UNABLE_TO_GET_ACTIVE_SELECTION = -3,
+    UNABLE_TO_SET_ACTIVE_SELECTION = -4,
+    UNABLE_TO_MERGE_SELECTION_LISTS = -5,
+    SUCCESS = 0
+};
+
+
+MayaPythonCExtStatus addToActiveSelectionList(const char *name)
+{
+    MStatus stat;
+
+    MSelectionList objList;
+    stat = objList.add(name);
+    if (!stat) {
+        return MayaPythonCExtStatus::NODE_DOES_NOT_EXIST;
+    }
+
+    MSelectionList activeSelList;
+    stat = MGlobal::getActiveSelectionList(activeSelList, true);
+    if (!stat) {
+        return MayaPythonCExtStatus::UNABLE_TO_GET_ACTIVE_SELECTION;
+    }
+
+    stat = activeSelList.merge(objList);
+    if (!stat) {
+        return MayaPythonCExtStatus::UNABLE_TO_MERGE_SELECTION_LISTS;
+    }
+
+    stat = MGlobal::setActiveSelectionList(activeSelList);
+    if (!stat) {
+        return MayaPythonCExtStatus::UNABLE_TO_SET_ACTIVE_SELECTION;
+    }
+
+    return MayaPythonCExtStatus::SUCCESS;
+}
+```
+
+Again, this should be pretty simple to figure out what's going on. We check if
+the object exists, and if it does, we add it to the actively-selected
+items. But, for all intents and purposes, this is why you would use
+``selectByName`` anyway, so it will fulfill our requirements for this particular 
+example.
+
+Let's go ahead and implement the Python binding for this:
+
+```c++
+static PyObject *pyAddToActiveSelectionList(PyObject *self, PyObject *args)
+{
+    const char *nodeName;
+    if (!PyArg_ParseTuple(args, "s", &nodeName)) {
+        return NULL;
+    }
+
+    PyGILState_STATE pyGILState = PyGILState_Ensure();
+
+    MayaPythonCExtStatus stat = addToActiveSelectionList(nodeName);
+    if (stat != MayaPythonCExtStatus::SUCCESS) {
+        MGlobal::displayError("An error occurred!");
+    }
+
+    PyObject *result = Py_BuildValue("h", stat);
+
+    PyGILState_Release(pyGILState);
+
+    return result;
+}
+```
+
+As before, we see that the signature of the function follows that of a
+``PyCFunction`` type, where two pointers to ``PyObject``s are passed into the 
+function. Again, we parse the first argument using ``PyArg_ParseTuple`` in order 
+to extract the string that the caller passed into the Python function using the
+``s`` format specifier. , we then ensure that the GIL is accquired once more
+before executing our code, call our C++ function, and then return the status
+code (since it's an enum, we return a ``short`` using the ``h`` format
+specifier), while remembering to release the GIL when we're done with it.
+
+
+## A possible problem ##
 
 Now, try this:
 
@@ -164,17 +269,18 @@ It turns out that, as usual, everything has to do with memory sooner or later,
 and this is one area that a memory-managed language such as Python is severely
 deficient in.
 
-## Caveats ##
+
+### Understanding why the segfault happens ###
 
 If you look closely at the script, you can see that we essentially perform the
 following operations:
 
 1. Load the DLL for our Maya plugin, which also initializes the Python bindings
    to the embedded Python interpreter inside of Maya.
-   
+
 2. We import the module that contains our bindings, and all its members into the
    global namespace for the Python interpreter.
-   
+
 3. If we recall, Python caches the modules that get loaded into memory. This is
    done so that subsequent ``import`` statements for the same module can just
    re-use the already-loaded module object instead of re-importing it
@@ -187,28 +293,89 @@ following operations:
    was loaded previously. _Even though the Python interpreter is still holding a
    reference to it!_
 
-5. Thus, when we call ``hello_world_maya`` the second time, we trigger a
-   segmentation fault.
-   
-What can we do to avoid this? 
+5. Thus, when we call ``hello_world_maya`` the second time, we trigger
+   a [segmentation fault](https://en.wikipedia.org/wiki/Segmentation_fault)
+   since the function call basically is executing a jump instruction to a region
+   of memory that was already deallocated by the OS and is no longer valid for
+   use by the application.
 
-Unfortunately, not much that's easy; the scope of solving this problem is
-outside the scope of this tutorial and I won't be delving into that right now.
-I'm still undecided on the best method myself; I might make a follow-up to this
-if I find a good solution in the future that I think is acceptable. For now,
-though, the overriding principle here should be:
+What can we do to avoid this?
 
-- Keep your plugin loaded around for as long as you need to call bindings into
-  it, or use objects allocated from it. Once unloaded, all bets are off.
-  
-- If you are in a scenario where you _need_ to unload the plugin, _always_
-  ensure that you load the plugin again _before_ making any calls that require
-  memory from it.
+Unfortunately, not much that's non-intrusive; here's one solution:
+
+```python
+import maya.cmds as cmds
+
+ARE_BINDINGS_VALID = False
+
+
+def load_maya_plugin_and_validate_bindings(pluginPath):
+    cmds.loadPlugin(pluginPath)
+    import maya_python_c_ext
+
+    ARE_BINDINGS_VALID = True
+
+    return maya_python_c_ext
+
+
+def unload_maya_plugin_and_invalidate_bindings(plugin):
+    cmds.unloadPlugin(plugin)
+
+    ARE_BINDINGS_VALID = False
+
+
+def validate_bindings():
+    return ARE_BINDINGS_VALID
+```
+
+As you can see, we write very simple wrappers around loading/unloading our
+plugin. The wrapper functions just set a global variable called
+``ARE_BINDINGS_VALID`` that we use to check if, well, the bindings are valid.
+
+How would these work in practice? Like so:
+
+```python
+import sys
+import os
+import maya.standalone
+
+
+if __name__ == '__main__':
+    maya.standalone.initialize()
+    import maya.cmds as cmds
+
+    sys.path.append(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'py'))
+
+    import validate
+
+    pluginPath = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'msbuild', 'maya_python_c_ext.mll')
+    print('loading plugin from {}'.format(pluginPath))
+
+    mpce = validate.load_maya_plugin_and_validate_bindings(pluginPath)
+
+    mpce.hello_world_maya('my string')
+
+    validate.unload_maya_plugin_and_invalidate_bindings('maya_python_c_ext')
+
+    if validate.validate_bindings():
+        mpce.hello_world_maya('my string')
+    else:
+        print('The bindings are no longer valid!')
+
+    maya.standalone.uninitialize()
+```
+
+It's not exactly what I would consider an ideal solution, but there rarely is
+such a thing. Alternatively, you could consider having an intermediate plugin
+handle validating the bindings (although you would then need to guarantee that
+this intermediate plugin itself was loaded at all times as well), but that's a
+level of complicatiion I don't want to get into right now.
+
 
 !!! tip "Python and unloading modules"
     To read more about why unloading Python modules has been such a contentious
     issue, you can [look at the discussion thread](https://bugs.python.org/issue9072).
-    
+
 
 ## When to use this method ##
 
@@ -226,6 +393,6 @@ but for me personally, I think this is most useful when:
   "guard" layer that checks for validity of the module loaded before allowing
   you to access the module, or just having Python wrapper functions that have
   globals set to indicate the validity of the modules that have been loaded.
-  
+
 Perhaps the use cases might be limited, but I think it's a good tool to keep in
 mind nonetheless.

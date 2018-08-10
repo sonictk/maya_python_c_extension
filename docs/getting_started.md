@@ -12,7 +12,7 @@ having a ``.py``file along with a ``__init__.py`` file as well; there's usually
 a single ``.pyd`` instead. If you've seen
 my
 [previous tutorial](https://sonictk.github.io/maya_hot_reload_example_public/getting_started/#understanding-how-libraries-work),
-know this: a ``.pyd`` file is essentially a DLL. It's the _exact same
+let's expand on this: a ``.pyd`` file is essentially a DLL. It's the _exact same
 format_. However, just like a Maya plugin (``.mll`` on Windows) shares the exact
 same format as a DLL does, a ``.pyd`` file follows specific conventions so that
 the Python interpreter knows how to load it:
@@ -24,8 +24,8 @@ the Python interpreter knows how to load it:
   about this more when we implement our own entry point in a bit.
 
 * As mentioned above, the ``.pyd`` file does not need to be linked with the main
-  program executable (or Maya plugin, in this case), since the Python
-  interpreter will be loading it dynamically at run-time.
+  program executable (Maya, in this case), since the Python
+  interpreter will be loading it dynamically at run-time. 
 
 * You cannot rely on the standard method of declaring exports from a DLL, either
   through symbol visiblity or specifying external linkage (i.e. ``extern
@@ -35,12 +35,12 @@ the Python interpreter knows how to load it:
 
 !!! tip "Crossing the platforms"
     On Linux, ``.pyd`` files will instead be ``.so`` files, and (I believe, but
-    I can't be bothered to boot up my Macbook to check) on OSX, this will be
+    I can't be bothered to boot up my Macbook to check) on OSX, these will be
     ``.dylib`` files.
 
 The main takeaway here is that _python modules are nothing special._ They're
 just libraries, loaded at run-time dynamically, that follow specific conventions
-that the Python interpreter relies on to be able to function the way it does.
+the Python interpreter relies on to be able to function the way it does.
 
 Ok, so we know that a ``.pyd`` is essentially just a DLL. Cool. So how does the
 Python interpreter know where to look for our module when we type ``import foo_bar``?
@@ -225,6 +225,18 @@ for now; we'll see why this is enforced later when we register this function in
 the _function table_. Basically our function must return a pointer to a
 ``PyObject``, and take two pointers to ``PyObject``s as well.
 
+!!! tip "The ``PyCFunction`` signature"
+    What is this ``PyCFunction`` malarkey anyway? Well, if we look at the [official 
+    documentation](https://docs.python.org/2/c-api/structures.html#c.PyCFunction), 
+    we see that it is basically the common type of function signature used for
+    (almost) all the Python callable functions; the first two ``PyObject``
+    pointer arguments have different semantics depending on what kind of flags
+    are passed into the _function table_ when the function is registered. For
+    the case above, since we used ``METH_VARARGS`` as the flag describing how
+    our function call should be constructed, the first pointer refers to the
+    module object, and the second pointer refers to a tuple ``PyObject``
+    representing all the arguments that were passed into the function from Python.
+
 The first few lines make use of ``PyArg_ParseTuple`` to basically parse the
 arguments given to the Python function. For example, if I called the function
 ``foo_bar('oh noes')``, ``PyArg_ParseTuple`` would, with the given arguments
@@ -252,7 +264,7 @@ The way I like to think about the GIL in Python is the following statement:
 That's it.
 
 !!! tip "Mutex?"
-    Ok, so for those of us who aren't familiar with what a mutex is, it's short
+    For those of us who aren't familiar with what a mutex is, it's shorthand
     for **mutual exclusion object**. It is basically a mechanism (more often
     than not implemented as a simple object with a unique ID) that allows a
     single thread within a running process to say, "Hey, I need to access this

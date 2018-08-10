@@ -10,10 +10,6 @@ I would recommend perusing it if only for reference.
 
 ## Special Thanks ##
 
-[Charles Wardlaw](https://twitter.com/kattkieru)
-Charles is a fantastic person to discuss random ideas with, and he's partially the 
-reason that motivated me to write up this tutorial.
-
 [Raffaele Fragapane](http://www.cultofrig.com/)
 As usual, Raffaele is a great guy to bounce ideas off and it helps that he's pretty 
 good at pointing out holes in your assumptions. Also, if you work in Maya in any 
