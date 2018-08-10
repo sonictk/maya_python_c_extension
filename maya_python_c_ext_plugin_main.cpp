@@ -5,6 +5,8 @@ const char *kAUTHOR = "Siew Yi Liang";
 const char *kVERSION = "1.0.0";
 const char *kREQUIRED_API_VERSION = "Any";
 
+PyObject *module = NULL;
+
 
 MStatus initializePlugin(MObject obj)
 {
@@ -20,15 +22,16 @@ MStatus initializePlugin(MObject obj)
 		// crashing Maya.
 		PyGILState_STATE pyGILState = PyGILState_Ensure();
 
-		PyObject *module = Py_InitModule3("maya_python_c_ext",
-										  mayaPythonCExtMethods,
-										  MAYA_PYTHON_C_EXT_DOCSTRING);
+		module = Py_InitModule3("maya_python_c_ext",
+								mayaPythonCExtMethods,
+								MAYA_PYTHON_C_EXT_DOCSTRING);
 
 		MGlobal::displayInfo("Registered Python bindings!");
 
 		if (module == NULL) {
 			return MStatus::kFailure;
 		}
+
 		Py_INCREF(module);
 
 		PyGILState_Release(pyGILState);
@@ -41,6 +44,8 @@ MStatus initializePlugin(MObject obj)
 MStatus uninitializePlugin(MObject obj)
 {
 	MStatus status;
+
+	Py_DECREF(module);
 
 	return status;
 }

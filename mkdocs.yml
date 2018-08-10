@@ -1,0 +1,41 @@
+site_name: Writing a Maya Python C++ Extension 
+site_description: Tutorial on how to expose Python bindings to your Maya C++ code
+site_author: Siew Yi Liang
+
+theme: material
+
+theme:
+    name: 'material'
+    palette:
+        primary: 'blue'
+        accent: 'deep orange'
+    
+pages:
+    - About: index.md
+    - Getting Started: getting_started.md
+    - Writing the Module: writing_the_python_standalone_module.md
+    - Exposing the Bindings Directly: exposing_the_bindings_in_maya_plugin.md
+    - Credits: credits.md
+
+
+repo_name: 'maya_python_c_extension'
+repo_url: 'https://bitbucket.org/sonictk/maya_python_c_extension'
+
+
+markdown_extensions:
+    - inline_graphviz
+    - admonition
+    - codehilite:
+    - toc:
+        permalink: true    
+
+edit_uri: ''
+
+extra:
+  social:
+    - type: 'github'
+      link: 'https://github.com/sonictk'
+    - type: 'twitter'
+      link: 'https://twitter.com/ylsiew'
+    - type: 'linkedin'
+      link: 'https://linkedin.com/in/sonictk'
