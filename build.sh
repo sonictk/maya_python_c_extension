@@ -52,10 +52,10 @@ MayaPluginEntryPoint="${PWD}/${ProjectName}_plugin_main.cpp";
 PythonModuleEntryPoint="${PWD}/${ProjectName}_py_mod_main.cpp";
 
 # Setup all the compiler flags
-CommonCompilerFlags="-DBits64_ -m64 -DUNIX -D_BOOL -DLINUX -DFUNCPROTO -D_GNU_SOURCE -DLINUX_64 -fPIC -fno-strict-aliasing -DREQUIRE_IOSTREAM -Wall -std=c++11 -Wno-multichar -Wno-comment -Wno-sign-compare -funsigned-char -pthread -Wno-deprecated -Wno-reorder -ftemplate-depth-25 -fno-gnu-keywords -o \"${BuildDir}/${ProjectName}.o\"";
+CommonCompilerFlags="-c -DBits64_ -m64 -DUNIX -D_BOOL -DLINUX -DFUNCPROTO -D_GNU_SOURCE -DLINUX_64 -fPIC -fno-strict-aliasing -DREQUIRE_IOSTREAM -Wall -std=c++11 -Wno-multichar -Wno-comment -Wno-sign-compare -funsigned-char -pthread -Wno-deprecated -Wno-reorder -ftemplate-depth-25 -fno-gnu-keywords";
 
 # Add the include directories for header files
-CommonCompilerFlags="${CommonCompilerFlags} -I${MayaRootDir}/include -I${MayaRootDir}/include/python2.7";
+CommonCompilerFlags="${CommonCompilerFlags} -I${MayaIncludeDir} -I${MayaIncludeDir}/python2.7";
 
 CommonCompilerFlagsDebug="-ggdb -O0 ${CommonCompilerFlags}";
 CommonCompilerFlagsRelease="-O3 ${CommonCompilerFlags}";
@@ -70,13 +70,10 @@ PythonModuleCompilerFlagsRelease="${CommonCompilerFlagsRelease} ${PythonModuleEn
 # -Bsymbolic binds references to global symbols within the library.
 # This avoids symbol clashes in other shared libraries but forces
 # the linking of all required libraries.
-CommonLinkerFlags="-Wl,-Bsymbolic -shared";
+CommonLinkerFlags="-Bsymbolic -shared -lm -ldl";
 
 # Add all the Maya libraries to link against
-CommonLinkerFlags="${CommonLinkerFlags} ${MayaLibraryDir}/libOpenMaya.so ${MayaLibraryDir}/libOpenMayaAnim.so ${MayaLibraryDir}/libOpenMayaFX.so ${MayaLibraryDir}/libOpenMayaRender.so ${MayaLibraryDir}/libOpenMayaUI.so ${MayaLibraryDir}/libFoundation.so ${MayaLibraryDir}/libclew.so ${MayaLibraryDir}/libOpenMayalib.so ${MayaLibraryDir}/libOpenMaya.so ${MayaLibraryDir}/libAnimSlice.so ${MayaLibraryDir}/libDeformSlice.so ${MayaLibraryDir}/libModifiers.so ${MayaLibraryDir}/libDynSlice.so ${MayaLibraryDir}/libKinSlice.so ${MayaLibraryDir}/libModelSlice.so ${MayaLibraryDir}/libNurbsSlice.so ${MayaLibraryDir}/libPolySlice.so ${MayaLibraryDir}/libProjectSlice.so ${MayaLibraryDir}/libImage.so ${MayaLibraryDir}/libShared.so ${MayaLibraryDir}/libTranslators.so ${MayaLibraryDir}/libDataModel.so ${MayaLibraryDir}/libRenderModel.so ${MayaLibraryDir}/libNurbsEngine.so ${MayaLibraryDir}/libDependEngine.so ${MayaLibraryDir}/libCommandEngine.so ${MayaLibraryDir}/libFoundation.so ${MayaLibraryDir}/libIMFbase.so";
-
-# Now add the OS libraries to link against
-CommonLinkerFlags="${CommonLinkerFlags} libm libdl";
+CommonLinkerFlags="${CommonLinkerFlags} ${MayaLibraryDir}/libOpenMaya.so ${MayaLibraryDir}/libOpenMayaAnim.so ${MayaLibraryDir}/libOpenMayaFX.so ${MayaLibraryDir}/libOpenMayaRender.so ${MayaLibraryDir}/libOpenMayaUI.so ${MayaLibraryDir}/libFoundation.so ${MayaLibraryDir}/libclew.so ${MayaLibraryDir}/libImage.so ${MayaLibraryDir}/libIMFbase.so";
 
 CommonLinkerFlagsDebug="${CommonLinkerFlags} -ggdb -O0";
 CommonLinkerFlagsRelease="${CommonLinkerFlags} -O2";
@@ -87,11 +84,11 @@ PythonModuleExtension="${MayaPluginExtension}";
 MayaPluginLinkerFlagsCommon="-o ${BuildDir}/${ProjectName}.${MayaPluginExtension}";
 PythonModuleLinkerFlagsCommon="-o ${BuildDir}/${ProjectName}.${PythonModuleExtension}";
 
-MayaPluginLinkerFlagsRelease="${CommonLinkerFlagsRelease} ${CommonLinkerFlags} ${MayaPluginLinkerFlagsCommon}";
-MayaPluginLinkerFlagsDebug="${CommonLinkerFlagsDebug} ${CommonLinkerFlags} ${MayaPluginLinkerFlagsCommon}";
+MayaPluginLinkerFlagsRelease="${CommonLinkerFlagsRelease} ${MayaPluginLinkerFlagsCommon}";
+MayaPluginLinkerFlagsDebug="${CommonLinkerFlagsDebug} ${MayaPluginLinkerFlagsCommon}";
 
-PythonModuleLinkerFlagsRelease="${CommonLinkerFlagsRelease} ${CommonLinkerFlags} ${PythonModuleLinkerFlagsCommon}";
-PythonModuleLinkerFlagsDebug="${CommonLinkerFlagsDebug} ${CommonLinkerFlags} ${PythonModuleLinkerFlagsCommon}";
+PythonModuleLinkerFlagsRelease="${CommonLinkerFlagsRelease} ${PythonModuleLinkerFlagsCommon}";
+PythonModuleLinkerFlagsDebug="${CommonLinkerFlagsDebug} ${PythonModuleLinkerFlagsCommon}";
 
 
 if [ "$BuildType" == "debug" ]; then
