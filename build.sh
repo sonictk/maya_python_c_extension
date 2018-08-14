@@ -52,7 +52,7 @@ MayaPluginEntryPoint="${PWD}/${ProjectName}_plugin_main.cpp";
 PythonModuleEntryPoint="${PWD}/${ProjectName}_py_mod_main.cpp";
 
 # Setup all the compiler flags
-CommonCompilerFlags="-c -DBits64_ -m64 -DUNIX -D_BOOL -DLINUX -DFUNCPROTO -D_GNU_SOURCE -DLINUX_64 -fPIC -fno-strict-aliasing -DREQUIRE_IOSTREAM -Wall -std=c++11 -Wno-multichar -Wno-comment -Wno-sign-compare -funsigned-char -pthread -Wno-deprecated -Wno-reorder -ftemplate-depth-25 -fno-gnu-keywords";
+CommonCompilerFlags="-DBits64_ -m64 -DUNIX -D_BOOL -DLINUX -DFUNCPROTO -D_GNU_SOURCE -DLINUX_64 -fPIC -fno-strict-aliasing -DREQUIRE_IOSTREAM -Wall -std=c++11 -Wno-multichar -Wno-comment -Wno-sign-compare -funsigned-char -pthread -Wno-deprecated -Wno-reorder -ftemplate-depth-25 -fno-gnu-keywords";
 
 # Add the include directories for header files
 CommonCompilerFlags="${CommonCompilerFlags} -I${MayaIncludeDir} -I${MayaIncludeDir}/python2.7";
@@ -60,29 +60,32 @@ CommonCompilerFlags="${CommonCompilerFlags} -I${MayaIncludeDir} -I${MayaIncludeD
 CommonCompilerFlagsDebug="-ggdb -O0 ${CommonCompilerFlags}";
 CommonCompilerFlagsRelease="-O3 ${CommonCompilerFlags}";
 
-MayaPluginCompilerFlagsDebug="${CommonCompilerFlagsDebug} ${MayaPluginEntryPoint}";
-MayaPluginCompilerFlagsRelease="${CommonCompilerFlagsRelease} ${MayaPluginEntryPoint}";
+MayaPluginIntermediateObject="${BuildDir}/${ProjectName}_plugin_main.o";
+PythonModuleIntermediateObject="${BuildDir}/${ProjectName}_py_mod_main.o";
 
-PythonModuleCompilerFlagsDebug="${CommonCompilerFlagsDebug} ${PythonModuleEntryPoint}";
-PythonModuleCompilerFlagsRelease="${CommonCompilerFlagsRelease} ${PythonModuleEntryPoint}";
+MayaPluginCompilerFlagsDebug="${CommonCompilerFlagsDebug} -c ${MayaPluginEntryPoint} -o ${MayaPluginIntermediateObject}";
+MayaPluginCompilerFlagsRelease="${CommonCompilerFlagsRelease} -c ${MayaPluginEntryPoint} -o ${MayaPluginIntermediateObject}";
+
+PythonModuleCompilerFlagsDebug="${CommonCompilerFlagsDebug} -c ${PythonModuleEntryPoint} -o ${PythonModuleIntermediateObject}";
+PythonModuleCompilerFlagsRelease="${CommonCompilerFlagsRelease} -c ${PythonModuleEntryPoint} -o ${PythonModuleIntermediateObject}";
 
 # As per the Maya official Makefile:
 # -Bsymbolic binds references to global symbols within the library.
 # This avoids symbol clashes in other shared libraries but forces
 # the linking of all required libraries.
-CommonLinkerFlags="-Bsymbolic -shared -lm -ldl";
+CommonLinkerFlags="-Bsymbolic -shared -lm -ldl -lstdc++";
 
 # Add all the Maya libraries to link against
 CommonLinkerFlags="${CommonLinkerFlags} ${MayaLibraryDir}/libOpenMaya.so ${MayaLibraryDir}/libOpenMayaAnim.so ${MayaLibraryDir}/libOpenMayaFX.so ${MayaLibraryDir}/libOpenMayaRender.so ${MayaLibraryDir}/libOpenMayaUI.so ${MayaLibraryDir}/libFoundation.so ${MayaLibraryDir}/libclew.so ${MayaLibraryDir}/libImage.so ${MayaLibraryDir}/libIMFbase.so";
 
 CommonLinkerFlagsDebug="${CommonLinkerFlags} -ggdb -O0";
-CommonLinkerFlagsRelease="${CommonLinkerFlags} -O2";
+CommonLinkerFlagsRelease="${CommonLinkerFlags} -O3";
 
 MayaPluginExtension="so";
 PythonModuleExtension="${MayaPluginExtension}";
 
-MayaPluginLinkerFlagsCommon="-o ${BuildDir}/${ProjectName}.${MayaPluginExtension}";
-PythonModuleLinkerFlagsCommon="-o ${BuildDir}/${ProjectName}.${PythonModuleExtension}";
+MayaPluginLinkerFlagsCommon="-o ${BuildDir}/${ProjectName}_plugin.${MayaPluginExtension} ${MayaPluginIntermediateObject}";
+PythonModuleLinkerFlagsCommon="-o ${BuildDir}/${ProjectName}.${PythonModuleExtension} ${PythonModuleIntermediateObject}";
 
 MayaPluginLinkerFlagsRelease="${CommonLinkerFlagsRelease} ${MayaPluginLinkerFlagsCommon}";
 MayaPluginLinkerFlagsDebug="${CommonLinkerFlagsDebug} ${MayaPluginLinkerFlagsCommon}";
@@ -126,10 +129,10 @@ fi;
 
 
 echo "Linking Python module (command follows)...";
-echo "ld ${PythonModuleLinkerFlags}";
+echo "g++ ${PythonModuleLinkerFlags}";
 echo "";
 
-ld ${PythonModuleLinkerFlags};
+g++ -v ${PythonModuleLinkerFlags};
 
 if [ $? -ne 0 ]; then
     echo -e "${RED}***************************************${NC}";
@@ -154,10 +157,10 @@ if [ $? -ne 0 ]; then
 fi;
 
 echo "Linking (command follows)...";
-echo "ld ${MayaPluginLinkerFlags}";
+echo "g++ ${MayaPluginLinkerFlags}";
 echo "";
 
-ld ${MayaPluginLinkerFlags};
+g++ -v ${MayaPluginLinkerFlags};
 
 if [ $? -ne 0 ]; then
     echo -e "${RED}***************************************${NC}";
