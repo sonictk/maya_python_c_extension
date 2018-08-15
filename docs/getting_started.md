@@ -295,8 +295,22 @@ C extension you probably wouldn't care about this, or would use
 ``PyEval_SaveThread`` and ``PyEval_RestoreThread`` instead, we make use of
 ``PyGILState_Ensure`` and ``PyGILState_Release`` to accquire and release the
 lock. Thus, we see these two calls surrounding the beginning and end of the
-relevant critical section that calls Python code.
+relevant critical section of our bindings that could end up calling Python code.
 
+!!! tip "Why is ``mayapy`` special?"
+    [John Calsbeek](https://twitter.com/jcalsbeek) points out, correctly, that 
+    this machination shouldn't be necessary; Maya should already have accquired
+    the GIL by then, since _Maya should already have accquired it in order to
+    call into Python in the first place_. So why do we have to explicitly make 
+    sure we accquire it again?
+    
+    Well, remember that we don't _actually_ control the implementation of Maya
+    API calls. If any of those calls happen to execute Python code (or MEL)
+    without Maya knowing about it, Maya might crash, since you might end up
+    executing Python code from a different thread than the Maya main thread. 
+    If you can guarantee that all your binding did was purely native and did not 
+    make any calls that execute Python bytecode, you don't need to re-accquire 
+    the GIL. To be safe, though, we're going to do it in the examples here.
 
 ### Returning ``PyObject`` values ###
 

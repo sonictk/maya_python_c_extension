@@ -16,6 +16,10 @@ good at pointing out holes in your assumptions. Also, if you work in Maya in any
 technical capacity whatsoever, watching his **Cult of Rig** series is probably a 
 good idea.
 
+[John Calsbeek](https://twitter.com/jcalsbeek)
+For pointing out a flaw in my reasoning regarding the GIL and pushing for a 
+better explanation of the problem.
+
 
 ## About the author ##
 
