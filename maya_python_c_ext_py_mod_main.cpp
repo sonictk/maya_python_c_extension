@@ -13,4 +13,13 @@ extern "C" PyMODINIT_FUNC initmaya_python_c_ext()
 	if (module == NULL) {
 		return;
 	}
+
+	// TODO: (sonictk) Test code.
+	// TestObjType.tp_new = PyType_GenericNew;
+	// if (PyType_Ready(&TestObjType) < 0) {
+	// 	return;
+	// }
+
+	Py_INCREF(&TestObjType);
+	PyModule_AddObject(module, "TestObj", (PyObject *)&TestObjType);
 }
