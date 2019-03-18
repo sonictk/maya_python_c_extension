@@ -120,7 +120,7 @@ set MayaPluginExtension=mll
 set PythonModuleExtension=pyd
 
 set MayaPluginLinkerFlagsCommon=/export:initializePlugin /export:uninitializePlugin /out:"%BuildDir%\%ProjectName%.%MayaPluginExtension%"
-set PythonModuleLinkerFlagsCommon=/export:initmaya_python_c_ext /out:"%BuildDir%\%ProjectName%.%PythonModuleExtension%"
+set PythonModuleLinkerFlagsCommon=/out:"%BuildDir%\%ProjectName%.%PythonModuleExtension%"
 
 
 set MayaPluginLinkerFlagsRelease=%CommonLinkerFlagsRelease% %MayaPluginLinkerFlagsCommon%

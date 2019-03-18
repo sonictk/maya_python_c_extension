@@ -7,6 +7,10 @@
 // for the entry point.
 extern "C" PyMODINIT_FUNC initmaya_python_c_ext()
 {
+	if (PyType_Ready(&TestObjType) < 0) {
+		return;
+	}
+
 	PyObject *module = Py_InitModule3("maya_python_c_ext",
 									  mayaPythonCExtMethods,
 									  MAYA_PYTHON_C_EXT_DOCSTRING);
@@ -16,9 +20,6 @@ extern "C" PyMODINIT_FUNC initmaya_python_c_ext()
 
 	// TODO: (sonictk) Test code.
 	// TestObjType.tp_new = PyType_GenericNew;
-	// if (PyType_Ready(&TestObjType) < 0) {
-	// 	return;
-	// }
 
 	Py_INCREF(&TestObjType);
 	PyModule_AddObject(module, "TestObj", (PyObject *)&TestObjType);

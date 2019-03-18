@@ -2,7 +2,7 @@
 #define MAYA_PYTHON_C_EXT_PY_UTIL_H
 
 #include <Python.h>
-#include <structmember.h>
+#include <structmember.h> // NOTE: (sonictk) Needed for T_OBJECT_EX.
 #include <maya/MGlobal.h>
 
 
@@ -17,14 +17,22 @@ typedef struct
 
 static void TestObj_dealloc(TestObj *self)
 {
+	// NOTE: (sonictk) XDECREF will take NULL into account while DECREF will not.
 	Py_XDECREF(self->first);
 	Py_XDECREF(self->last);
+
+	// NOTE: (sonictk) Call the tp_free method to free the object's memory (in case
+	// we're not freeing this type itself, but a instance of a subclass.)
 	Py_TYPE(self)->tp_free((PyObject *)self);
 
 	return;
 }
 
 
+/// Ensures that when a new object is created, that the first/last names are
+/// initialized as empty strings. This is exposed in Python as the __new__() method.
+/// Can be used to guarantee the initial values of instance variables. If this is
+/// not required, can use PyType_GenericNew() instead as the __new__() method.
 static PyObject *TestObj_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 {
 	TestObj *self;
@@ -52,6 +60,9 @@ static PyObject *TestObj_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 }
 
 
+/// This is exposed as the __init__() method. Used to initialize an object after
+/// it is created. Cannot guarantee that this is called, unlike the initializer.
+/// __init__() can be called multiple times.
 static int TestObj_init(TestObj *self, PyObject *args, PyObject *kwds)
 {
 	PyObject *first = NULL;
@@ -64,6 +75,10 @@ static int TestObj_init(TestObj *self, PyObject *args, PyObject *kwds)
 		return -1;
 	}
 
+	// NOTE: (sonictk) The type doesn't restrict the type of `first`, so it could
+	// be any kind of object. It could have a destructor that causes code to be
+	// executed that tries to access the `first` member. To guard against this,
+	// usually re-assign members before decref-ing them.
 	if (first) {
 		tmp = self->first;
 		Py_INCREF(first);
@@ -82,6 +97,9 @@ static int TestObj_init(TestObj *self, PyObject *args, PyObject *kwds)
 }
 
 
+/// Exposes the instance variables as attributes.
+/// Does not provide a way to restrict the types of objects that can be assigned
+/// to the Python attributes. Also doesn't stop the attributes from being deleted.
 static PyMemberDef TestObj_members[] = {
 	{"first", T_OBJECT_EX, offsetof(TestObj, first), 0, "first name"},
 	{"last", T_OBJECT_EX, offsetof(TestObj, last), 0, "last name"},
@@ -134,42 +152,42 @@ static PyMethodDef TestObj_methods[] = {
 static PyTypeObject TestObjType = {
 	PyVarObject_HEAD_INIT(NULL, 0)
 	"maya_python_c_ext.TestObj",	   /* tp_name */ // NOTE: (sonictk) Use dotted name here, otherwise pydoc will not list the new type in the module documentation.
-	sizeof(TestObj),			 /* tp_basicsize */ // NOTE: (sonictk) So that Python knows how much memory to allocate when calling PyObject_New().
-	0,						   /* tp_itemsize */
-	0,						   /* tp_dealloc */
-	0,						   /* tp_print */
-	0,						   /* tp_getattr */
-	0,						   /* tp_setattr */
-	0,						   /* tp_compare */
-	0,						   /* tp_repr */
-	0,						   /* tp_as_number */
-	0,						   /* tp_as_sequence */
-	0,						   /* tp_as_mapping */
-	0,						   /* tp_hash */
-	0,						   /* tp_call */
-	0,						   /* tp_str */
-	0,						   /* tp_getattro */
-	0,						   /* tp_setattro */
-	0,						   /* tp_as_buffer */
-	Py_TPFLAGS_DEFAULT,	   /* tp_flags */
-	"Test object",		       /* tp_doc */
-	0,						   /* tp_traverse */
-	0,						   /* tp_clear */
-	0,						   /* tp_richcompare */
-	0,						   /* tp_weaklistoffset */
-	0,						   /* tp_iter */
-	0,						   /* tp_iternext */
-	TestObj_methods,		   /* tp_methods */
-	TestObj_members,		   /* tp_members */
-	0,						   /* tp_getset */
-	0,						   /* tp_base */
-	0,						   /* tp_dict */
-	0,						   /* tp_descr_get */
-	0,						   /* tp_descr_set */
-	0,						   /* tp_dictoffset */
-	(initproc)TestObj_init,    /* tp_init */
-	0,						   /* tp_alloc */
-	TestObj_new,			   /* tp_new */
+	sizeof(TestObj),			       /* tp_basicsize */ // NOTE: (sonictk) So that Python knows how much memory to allocate when calling PyObject_New().
+	0,						           /* tp_itemsize */
+	(destructor)TestObj_dealloc,       /* tp_dealloc */
+	0,						           /* tp_print */
+	0,						           /* tp_getattr */
+	0,						           /* tp_setattr */
+	0,						           /* tp_compare */
+	0,						           /* tp_repr */
+	0,						           /* tp_as_number */
+	0,						           /* tp_as_sequence */
+	0,						           /* tp_as_mapping */
+	0,						           /* tp_hash */
+	0,						           /* tp_call */
+	0,						           /* tp_str */
+	0,						           /* tp_getattro */
+	0,						           /* tp_setattro */
+	0,						           /* tp_as_buffer */
+	Py_TPFLAGS_DEFAULT|Py_TPFLAGS_BASETYPE,	   /* tp_flags */
+	"Test object",		               /* tp_doc */
+	0,						           /* tp_traverse */
+	0,						           /* tp_clear */
+	0,						           /* tp_richcompare */
+	0,						           /* tp_weaklistoffset */
+	0,						           /* tp_iter */
+	0,						           /* tp_iternext */
+	TestObj_methods,		           /* tp_methods */
+	TestObj_members,		           /* tp_members */
+	0,						           /* tp_getset */
+	0,						           /* tp_base */
+	0,						           /* tp_dict */
+	0,						           /* tp_descr_get */
+	0,						           /* tp_descr_set */
+	0,						           /* tp_dictoffset */
+	(initproc)TestObj_init,            /* tp_init */
+	0,						           /* tp_alloc */
+	TestObj_new,			           /* tp_new */
 };
 
 
