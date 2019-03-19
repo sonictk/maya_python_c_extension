@@ -71,7 +71,9 @@ static int TestObj_init(TestObj *self, PyObject *args, PyObject *kwds)
 
 	static char *kwlist[] = {"first", "last", "number", NULL};
 
-	if (!PyArg_ParseTupleAndKeywords(args, kwds, "|OOi", kwlist, &first, &last, &self->number)) {
+	// NOTE: (sonictk) Swap these two lines for generic object VS string only parsing
+	// if (!PyArg_ParseTupleAndKeywords(args, kwds, "|OOi", kwlist, &first, &last, &self->number)) {
+	if (!PyArg_ParseTupleAndKeywords(args, kwds, "|SSi", kwlist, &first, &last, &self->number)) {
 		return -1;
 	}
 
@@ -101,10 +103,82 @@ static int TestObj_init(TestObj *self, PyObject *args, PyObject *kwds)
 /// Does not provide a way to restrict the types of objects that can be assigned
 /// to the Python attributes. Also doesn't stop the attributes from being deleted.
 static PyMemberDef TestObj_members[] = {
-	{"first", T_OBJECT_EX, offsetof(TestObj, first), 0, "first name"},
-	{"last", T_OBJECT_EX, offsetof(TestObj, last), 0, "last name"},
+	// {"first", T_OBJECT_EX, offsetof(TestObj, first), 0, "first name"},
+	// {"last", T_OBJECT_EX, offsetof(TestObj, last), 0, "last name"},
 	{"number", T_INT, offsetof(TestObj, number), 0, "test number"},
 	{NULL} // NOTE: (sonictk) Sentinel value
+};
+
+
+static PyObject *TestObj_getfirst(TestObj *self, void *closure)
+{
+	Py_INCREF(self->first);
+
+	return self->first;
+}
+
+
+static int TestObj_setfirst(TestObj *self, PyObject *value, void *closure)
+{
+	if (value == NULL) {
+		PyErr_SetString(PyExc_AttributeError, "Cannot delete the attribute!");
+
+		return -1;
+	}
+
+	if (!PyString_Check(value)) {
+		PyErr_SetString(PyExc_TypeError, "The value must be a string!");
+
+		return -1;
+	}
+
+	Py_DECREF(self->first);
+	Py_INCREF(value);
+	self->first = value;
+
+	return 0;
+}
+
+
+// NOTE: (sonictk) Closure is unused here; it's meant to support cases where definition
+// data is passed to the getter/setter i.e. can be used to allow a single set of
+// setter/getter functions that decide the attribute to get/set based on data in
+// the closure.
+static PyObject *TestObj_getlast(TestObj *self, void *closure)
+{
+	Py_INCREF(self->last);
+
+	return self->last;
+}
+
+
+static int TestObj_setlast(TestObj *self, PyObject *value, void *closure)
+{
+	if (value == NULL) {
+		PyErr_SetString(PyExc_TypeError, "Cannot delete the attribute!");
+
+		return -1;
+	}
+
+	if (!PyString_Check(value)) {
+		PyErr_SetString(PyExc_TypeError, "The value must be a string!");
+
+		return -1;
+	}
+
+	Py_DECREF(self->last);
+	Py_INCREF(value);
+
+	self->last = value;
+
+	return 0;
+}
+
+
+static PyGetSetDef TestObj_getseters[] = {
+	{"first", (getter)TestObj_getfirst, (setter)TestObj_setfirst, "first name", NULL},
+	{"last", (getter)TestObj_getlast, (setter)TestObj_setlast, "last name", NULL},
+	{NULL} // NOTE: (sonictk) Sentinel
 };
 
 
@@ -121,15 +195,15 @@ static PyObject *TestObj_name(TestObj *self)
 		}
 	}
 
-	if (self->first == NULL) {
-		PyErr_SetString(PyExc_AttributeError, "first");
-		return NULL;
-	}
+	// if (self->first == NULL) {
+	// 	PyErr_SetString(PyExc_AttributeError, "first");
+	// 	return NULL;
+	// }
 
-	if (self->last == NULL) {
-		PyErr_SetString(PyExc_AttributeError, "last");
-		return NULL;
-	}
+	// if (self->last == NULL) {
+	// 	PyErr_SetString(PyExc_AttributeError, "last");
+	// 	return NULL;
+	// }
 
 	args = Py_BuildValue("OO", self->first, self->last);
 	if (args == NULL) {
@@ -179,7 +253,7 @@ static PyTypeObject TestObjType = {
 	0,						           /* tp_iternext */
 	TestObj_methods,		           /* tp_methods */
 	TestObj_members,		           /* tp_members */
-	0,						           /* tp_getset */
+	TestObj_getseters,		           /* tp_getset */
 	0,						           /* tp_base */
 	0,						           /* tp_dict */
 	0,						           /* tp_descr_get */
