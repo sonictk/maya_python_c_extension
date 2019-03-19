@@ -15,11 +15,52 @@ typedef struct
 } TestObj;
 
 
+static int TestObj_traverse(TestObj *self, visitproc visit, void *arg)
+{
+	int vret;
+
+	if (self->first) {
+		vret = visit(self->first, arg);
+		if (vret != 0) {
+			return vret;
+		}
+	}
+
+	if (self->last) {
+		vret = visit(self->last, arg);
+		if (vret != 0) {
+			return vret;
+		}
+	}
+
+	return 0;
+}
+
+
+static int TestObj_clear(TestObj *self)
+{
+	PyObject *tmp;
+
+	tmp = self->first;
+	self->first = NULL;
+	Py_XDECREF(tmp);
+
+	tmp = self->last;
+	self->last = NULL;
+	Py_XDECREF(tmp);
+
+	return 0;
+}
+
+
 static void TestObj_dealloc(TestObj *self)
 {
+	PyObject_GC_UnTrack(self);
+	TestObj_clear(self);
+
 	// NOTE: (sonictk) XDECREF will take NULL into account while DECREF will not.
-	Py_XDECREF(self->first);
-	Py_XDECREF(self->last);
+	// Py_XDECREF(self->first);
+	// Py_XDECREF(self->last);
 
 	// NOTE: (sonictk) Call the tp_free method to free the object's memory (in case
 	// we're not freeing this type itself, but a instance of a subclass.)
@@ -243,10 +284,10 @@ static PyTypeObject TestObjType = {
 	0,						           /* tp_getattro */
 	0,						           /* tp_setattro */
 	0,						           /* tp_as_buffer */
-	Py_TPFLAGS_DEFAULT|Py_TPFLAGS_BASETYPE,	   /* tp_flags */
+	Py_TPFLAGS_DEFAULT|Py_TPFLAGS_BASETYPE|Py_TPFLAGS_HAVE_GC,	   /* tp_flags */
 	"Test object",		               /* tp_doc */
-	0,						           /* tp_traverse */
-	0,						           /* tp_clear */
+	(traverseproc)TestObj_traverse,           /* tp_traverse */
+	(inquiry)TestObj_clear,						           /* tp_clear */
 	0,						           /* tp_richcompare */
 	0,						           /* tp_weaklistoffset */
 	0,						           /* tp_iter */
