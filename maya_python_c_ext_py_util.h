@@ -55,6 +55,10 @@ static int TestObj_clear(TestObj *self)
 
 static void TestObj_dealloc(TestObj *self)
 {
+	// NOTE: (sonictk) dealloc may call arbitrary functions through the __del__()
+	// method or weakref callback; means that circular GC can be triggered inside
+	// the function. Since GC assumes refcount is not zero, we need to untrack the
+	// object from GC here before clearing the members.
 	PyObject_GC_UnTrack(self);
 	TestObj_clear(self);
 
@@ -303,6 +307,80 @@ static PyTypeObject TestObjType = {
 	(initproc)TestObj_init,            /* tp_init */
 	0,						           /* tp_alloc */
 	TestObj_new,			           /* tp_new */
+};
+
+
+typedef struct {
+	PyListObject list;
+	int state;
+} TestListObj;
+
+
+static PyObject *TestListObj_increment(TestListObj *self, PyObject *unused)
+{
+	self->state++;
+
+	return PyInt_FromLong(self->state);
+}
+
+
+static PyMethodDef TestListObj_methods[] = {
+	{"increment", (PyCFunction)TestListObj_increment, METH_NOARGS, PyDoc_STR("Increment state counter")},
+	{NULL, NULL},
+};
+
+
+static int TestListObj_init(TestListObj *self, PyObject *args, PyObject *kwds)
+{
+	if (PyList_Type.tp_init((PyObject *)self, args, kwds) < 0) {
+		return -1;
+	}
+
+	self->state = 0;
+
+	return 0;
+}
+
+// TODO: (sonictk) Continue
+static PyTypeObject TestListObjType = {
+	PyVarObject_HEAD_INIT(NULL, 0)
+	"maya_python_c_ext.TestListObj",          /* tp_name */
+	sizeof(TestListObj),	                  /* tp_basicsize */
+	0,						                  /* tp_itemsize */
+	0,						                  /* tp_dealloc */
+	0,						                  /* tp_print */
+	0,						                  /* tp_getattr */
+	0,						                  /* tp_setattr */
+	0,						                  /* tp_compare */
+	0,						                  /* tp_repr */
+	0,						                  /* tp_as_number */
+	0,						                  /* tp_as_sequence */
+	0,						                  /* tp_as_mapping */
+	0,						                  /* tp_hash */
+	0,						                  /* tp_call */
+	0,						                  /* tp_str */
+	0,						                  /* tp_getattro */
+	0,						                  /* tp_setattro */
+	0,						                  /* tp_as_buffer */
+	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE, /* tp_flags */
+	0,						                  /* tp_doc */
+	0,						                  /* tp_traverse */
+	0,						                  /* tp_clear */
+	0,						                  /* tp_richcompare */
+	0,						                  /* tp_weaklistoffset */
+	0,						                  /* tp_iter */
+	0,						                  /* tp_iternext */
+	TestListObj_methods,		              /* tp_methods */
+	0,						                  /* tp_members */
+	0,						                  /* tp_getset */
+	0,						                  /* tp_base */
+	0,						                  /* tp_dict */
+	0,						                  /* tp_descr_get */
+	0,						                  /* tp_descr_set */
+	0,						                  /* tp_dictoffset */
+	(initproc)TestListObj_init,	          /* tp_init */
+	0,						                  /* tp_alloc */
+	0,						                  /* tp_new */
 };
 
 

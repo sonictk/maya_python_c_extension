@@ -23,4 +23,5 @@ extern "C" PyMODINIT_FUNC initmaya_python_c_ext()
 
 	Py_INCREF(&TestObjType);
 	PyModule_AddObject(module, "TestObj", (PyObject *)&TestObjType);
+	PyModule_AddObject(module, "TestListObj", (PyObject *)&TestListObjType);
 }
