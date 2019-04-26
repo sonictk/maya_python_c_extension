@@ -23,5 +23,15 @@ extern "C" PyMODINIT_FUNC initmaya_python_c_ext()
 
 	Py_INCREF(&TestObjType);
 	PyModule_AddObject(module, "TestObj", (PyObject *)&TestObjType);
+
+
+	// NOTE: (sonictk) Due to xplatform compiler issues, we can't fill this field
+	// directly with the PyList_Type(). Therefore we do it here. This _must_ be done
+	// before calling PyType_Ready.
+	TestListObjType.tp_base = &PyList_Type;
+	if (PyType_Ready(&TestListObjType) < 0) {
+		return;
+	}
+	Py_INCREF(&TestListObjType);
 	PyModule_AddObject(module, "TestListObj", (PyObject *)&TestListObjType);
 }

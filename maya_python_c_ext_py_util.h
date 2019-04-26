@@ -332,6 +332,7 @@ static PyMethodDef TestListObj_methods[] = {
 
 static int TestListObj_init(TestListObj *self, PyObject *args, PyObject *kwds)
 {
+	// NOTE: (sonictk) This calls through to the __init__ method of the base type.
 	if (PyList_Type.tp_init((PyObject *)self, args, kwds) < 0) {
 		return -1;
 	}
@@ -341,24 +342,49 @@ static int TestListObj_init(TestListObj *self, PyObject *args, PyObject *kwds)
 	return 0;
 }
 
-// TODO: (sonictk) Continue
+// NOTE: (sonictk) This and the str method usually are the two that need to be
+// implemented in order to have __str__ and __repr__ just work.
+static PyObject *TestListObj_repr(PyObject *obj)
+{
+	return PyString_FromFormat("TestListObj_representation{{size:%d}}", sizeof(((TestListObj *)obj)->list));
+}
+
+
+static PyObject *TestListObj_str(PyObject *obj)
+{
+	return PyString_FromFormat("TestListObj_stringified{{size:%d}}", sizeof(((TestListObj *)obj)->list));
+}
+
+
+static int TestListObj_print(PyObject *obj, FILE *fp, int flags)
+{
+	if (flags & Py_PRINT_RAW) {
+		fprintf(fp, "<[TestListObj object--size: %d]>", (int)sizeof(((TestListObj *)obj)->list));
+	} else {
+		fprintf(fp, "\"<[TestListObj object--size: %d]\"", (int)sizeof(((TestListObj *)obj)->list));
+	}
+
+	return 0;
+}
+
+
 static PyTypeObject TestListObjType = {
 	PyVarObject_HEAD_INIT(NULL, 0)
 	"maya_python_c_ext.TestListObj",          /* tp_name */
 	sizeof(TestListObj),	                  /* tp_basicsize */
 	0,						                  /* tp_itemsize */
 	0,						                  /* tp_dealloc */
-	0,						                  /* tp_print */
+	TestListObj_print,		                  /* tp_print */
 	0,						                  /* tp_getattr */
 	0,						                  /* tp_setattr */
 	0,						                  /* tp_compare */
-	0,						                  /* tp_repr */
+	TestListObj_repr,		                  /* tp_repr */
 	0,						                  /* tp_as_number */
 	0,						                  /* tp_as_sequence */
 	0,						                  /* tp_as_mapping */
 	0,						                  /* tp_hash */
 	0,						                  /* tp_call */
-	0,						                  /* tp_str */
+	TestListObj_str,		                  /* tp_str */
 	0,						                  /* tp_getattro */
 	0,						                  /* tp_setattro */
 	0,						                  /* tp_as_buffer */
@@ -379,6 +405,8 @@ static PyTypeObject TestListObjType = {
 	0,						                  /* tp_descr_set */
 	0,						                  /* tp_dictoffset */
 	(initproc)TestListObj_init,	          /* tp_init */
+	// NOTE: (sonictk) When deriving a new type, not necessary to fill out tp_alloc
+	// with PyType_GenericNew; the allocate function from the base type will be inherited.
 	0,						                  /* tp_alloc */
 	0,						                  /* tp_new */
 };
